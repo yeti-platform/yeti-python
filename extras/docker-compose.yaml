@@ -1,0 +1,8 @@
+services:
+
+  yeti-python:
+    build:
+        context: ../
+        dockerfile: ./extras/Dockerfile
+    volumes:
+        - ../:/app/
