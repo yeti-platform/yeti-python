@@ -5,6 +5,9 @@ description = "Python bindings for the Yeti API"
 authors = ["tomchop"]
 license = "Apache"
 readme = "README.md"
+packages = [
+    { include = "yeti" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
