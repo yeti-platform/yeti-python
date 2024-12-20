@@ -1,6 +1,7 @@
 """Python client for the Yeti API."""
 
 import requests
+import requests_toolbelt.multipart.encoder as encoder
 
 import json
 from typing import Any, Sequence
@@ -149,10 +150,8 @@ class YetiApi:
           The response from the API; a dict representing the indicator.
         """
         params = {"indicator": indicator}
-        response, _ = self.client.post(
-            f"{self._url_root}/api/v2/indicators/", json=params
-        )
-        indicator = json.loads(response)
+        response = self.client.post(f"{self._url_root}/api/v2/indicators/", json=params)
+        indicator = response.json()
 
         if tags:
             params = {"tags": tags, "ids": [indicator["id"]]}
@@ -235,7 +234,7 @@ class YetiApi:
         response = self.client.post(
             f"{self._url_root}/api/v2/dfiq/to_archive", json=params
         )
-        return body
+        return response.bytes
 
     def upload_dfiq_archive(self, archive_path: str) -> dict[str, int]:
         """Uploads a DFIQ archive to Yeti.
@@ -318,8 +317,8 @@ class YetiApi:
         """Tags an object in Yeti."""
         params = {"tags": list(tags), "ids": [yeti_object["id"]]}
         endpoint = TYPE_TO_ENDPOINT[yeti_object["root_type"]]
-        result, _ = self.client.post(f"{self._url_root}{endpoint}/tag", json=params)
-        return json.loads(result)
+        result = self.client.post(f"{self._url_root}{endpoint}/tag", json=params)
+        return result.json()
 
     def link_objects(
         self,
