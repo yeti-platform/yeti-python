@@ -43,7 +43,7 @@ class YetiApi:
         self,
         method: str,
         url: str,
-        json_data: dict[str, Any] = None,
+        json_data: dict[str, Any] | None = None,
         body: bytes | None = None,
         headers=None,
     ) -> bytes:
@@ -61,14 +61,14 @@ class YetiApi:
 
         """
 
-        if json and body:
+        if json_data and body:
             raise ValueError("You must provide either json or body, not both.")
 
         request_kwargs = {}
 
         if headers:
             request_kwargs["headers"] = headers
-        if json:
+        if json_data:
             request_kwargs["json"] = json_data
         if body:
             request_kwargs["body"] = body
