@@ -45,7 +45,7 @@ class YetiApi:
         url: str,
         json_data: dict[str, Any] | None = None,
         body: bytes | None = None,
-        headers=None,
+        headers: dict[str, Any] | None = None,
     ) -> bytes:
         """Issues a request to the given URL.
 
