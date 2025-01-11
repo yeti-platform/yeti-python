@@ -43,7 +43,7 @@ class YetiApi:
         self,
         method: str,
         url: str,
-        json: dict[str, Any] = None,
+        json_data: dict[str, Any] = None,
         body: bytes | None = None,
         headers=None,
     ) -> bytes:
@@ -69,7 +69,7 @@ class YetiApi:
         if headers:
             request_kwargs["headers"] = headers
         if json:
-            request_kwargs["json"] = json
+            request_kwargs["json"] = json_data
         if body:
             request_kwargs["body"] = body
 
@@ -140,7 +140,7 @@ class YetiApi:
         response = self.do_request(
             "POST",
             f"{self._url_root}/api/v2/indicators/search",
-            json=params,
+            json_data=params,
         )
         return json.loads(response)["indicators"]
 
@@ -149,7 +149,7 @@ class YetiApi:
         response = self.do_request(
             "POST",
             f"{self._url_root}/api/v2/entities/search",
-            json=params,
+            json_data=params,
         )
         return json.loads(response)["entities"]
 
@@ -164,7 +164,7 @@ class YetiApi:
         """
         params = {"query": {"value": value}, "count": 0}
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/observables/search", json=params
+            "POST", f"{self._url_root}/api/v2/observables/search", json_data=params
         )
         return json.loads(response)["observables"]
 
@@ -183,12 +183,10 @@ class YetiApi:
         params = {"entity": entity}
         if tags:
             params["tags"] = tags
-        # response = self.client.post(f"{self._url_root}/api/v2/entities/", json=params)
-        # return json.loads(response)
         response = self.do_request(
             "POST",
             f"{self._url_root}/api/v2/entities/",
-            json=params,
+            json_data=params,
         )
         return json.loads(response)
 
@@ -208,14 +206,14 @@ class YetiApi:
         """
         params = {"indicator": indicator}
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/indicators/", json=params
+            "POST", f"{self._url_root}/api/v2/indicators/", json_data=params
         )
         indicator = json.loads(response)
 
         if tags:
             params = {"tags": tags, "ids": [indicator["id"]]}
             self.do_request(
-                "POST", f"{self._url_root}/api/v2/indicators/tag", json=params
+                "POST", f"{self._url_root}/api/v2/indicators/tag", json_data=params
             )
 
         return indicator
@@ -228,7 +226,7 @@ class YetiApi:
         """Patches an indicator in Yeti."""
         params = {"indicator": indicator_object}
         response = self.do_request(
-            "PATCH", f"{self._url_root}/api/v2/indicators/{yeti_id}", json=params
+            "PATCH", f"{self._url_root}/api/v2/indicators/{yeti_id}", json_data=params
         )
         return json.loads(response)
 
@@ -248,7 +246,7 @@ class YetiApi:
             query["type"] = dfiq_type
         params = {"query": query, "count": 0}
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/dfiq/search", json=params
+            "POST", f"{self._url_root}/api/v2/dfiq/search", json_data=params
         )
         return json.loads(response)["dfiq"]
 
@@ -260,7 +258,7 @@ class YetiApi:
             "update_indicators": True,
         }
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/dfiq/from_yaml", json=params
+            "POST", f"{self._url_root}/api/v2/dfiq/from_yaml", json_data=params
         )
         return json.loads(response)
 
@@ -277,7 +275,7 @@ class YetiApi:
             "update_indicators": True,
         }
         response = self.do_request(
-            "PATCH", f"{self._url_root}/api/v2/dfiq/{yeti_id}", json=params
+            "PATCH", f"{self._url_root}/api/v2/dfiq/{yeti_id}", json_data=params
         )
         return json.loads(response)
 
@@ -295,7 +293,7 @@ class YetiApi:
         if dfiq_type:
             params["query"] = {"type": dfiq_type}
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/dfiq/to_archive", json=params
+            "POST", f"{self._url_root}/api/v2/dfiq/to_archive", json_data=params
         )
         return response
 
@@ -339,7 +337,7 @@ class YetiApi:
         """
         params = {"value": value, "type": observable_type, "tags": tags}
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/observables/", json=params
+            "POST", f"{self._url_root}/api/v2/observables/", json_data=params
         )
         return json.loads(response)
 
@@ -371,7 +369,7 @@ class YetiApi:
         }
 
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/observables/bulk", json=params
+            "POST", f"{self._url_root}/api/v2/observables/bulk", json_data=params
         )
         return json.loads(response)
 
@@ -382,7 +380,7 @@ class YetiApi:
         params = {"tags": list(tags), "ids": [yeti_object["id"]]}
         endpoint = TYPE_TO_ENDPOINT[yeti_object["root_type"]]
         response = self.do_request(
-            "POST", f"{self._url_root}{endpoint}/tag", json=params
+            "POST", f"{self._url_root}{endpoint}/tag", json_data=params
         )
         return json.loads(response)
 
@@ -414,7 +412,7 @@ class YetiApi:
             "description": description,
         }
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/graph/add", json=params
+            "POST", f"{self._url_root}/api/v2/graph/add", json_data=params
         )
         return json.loads(response)
 
@@ -458,6 +456,6 @@ class YetiApi:
             "target_types": target_types,
         }
         response = self.do_request(
-            "POST", f"{self._url_root}/api/v2/graph/search", json=params
+            "POST", f"{self._url_root}/api/v2/graph/search", json_data=params
         )
         return json.loads(response)
