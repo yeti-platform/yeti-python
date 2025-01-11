@@ -10,7 +10,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_auth_api_key(self, mock_post):
         mock_response = MagicMock()
-        mock_response.text = '{"access_token": "fake_token"}'
+        mock_response.bytes = b'{"access_token": "fake_token"}'
         mock_post.return_value = mock_response
 
         self.api.auth_api_key("fake_apikey")
@@ -23,7 +23,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_search_indicators(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"indicators": [{"name": "test"}]}
+        mock_response.bytes = b'{"indicators": [{"name": "test"}]}'
         mock_post.return_value = mock_response
 
         result = self.api.search_indicators(name="test")
@@ -36,7 +36,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_search_entities(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"entities": [{"name": "test_entity"}]}
+        mock_response.bytes = b'{"entities": [{"name": "test_entity"}]}'
         mock_post.return_value = mock_response
 
         result = self.api.search_entities(name="test_entity")
@@ -49,7 +49,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_search_observables(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"observables": [{"value": "test_value"}]}
+        mock_response.bytes = b'{"observables": [{"value": "test_value"}]}'
         mock_post.return_value = mock_response
 
         result = self.api.search_observables(value="test_value")
@@ -62,7 +62,8 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_new_entity(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "new_entity"}
+        mock_response.bytes = b'{"id": "new_entity"}'
+        mock_response.bytes = b'{"id": "new_entity"}'
         mock_post.return_value = mock_response
 
         result = self.api.new_entity({"name": "test_entity"})
@@ -75,7 +76,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_new_indicator(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "new_indicator"}
+        mock_response.bytes = b'{"id": "new_indicator"}'
         mock_post.return_value = mock_response
 
         result = self.api.new_indicator({"name": "test_indicator"})
@@ -88,7 +89,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.patch")
     def test_patch_indicator(self, mock_patch):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "patched_indicator"}
+        mock_response.bytes = b'{"id": "patched_indicator"}'
         mock_patch.return_value = mock_response
 
         result = self.api.patch_indicator(1, {"name": "patched_indicator"})
@@ -101,7 +102,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_search_dfiq(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"dfiq": [{"name": "test_dfiq"}]}
+        mock_response.bytes = b'{"dfiq": [{"name": "test_dfiq"}]}'
         mock_post.return_value = mock_response
 
         result = self.api.search_dfiq(name="test_dfiq")
@@ -114,7 +115,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_new_dfiq_from_yaml(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "new_dfiq"}
+        mock_response.bytes = b'{"id": "new_dfiq"}'
         mock_post.return_value = mock_response
 
         result = self.api.new_dfiq_from_yaml("type", "yaml_content")
@@ -131,7 +132,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.patch")
     def test_patch_dfiq_from_yaml(self, mock_patch):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "patched_dfiq"}
+        mock_response.bytes = b'{"id": "patched_dfiq"}'
         mock_patch.return_value = mock_response
 
         result = self.api.patch_dfiq_from_yaml("type", "yaml_content", 1)
@@ -161,7 +162,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_upload_dfiq_archive(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"uploaded": 1}
+        mock_response.bytes = b'{"uploaded": 1}'
         mock_post.return_value = mock_response
 
         with patch("builtins.open", unittest.mock.mock_open(read_data=b"data")):
@@ -171,14 +172,14 @@ class TestYetiApi(unittest.TestCase):
             mock_post.call_args[0][0], "http://fake-url/api/v2/dfiq/from_archive"
         )
         self.assertRegex(
-            mock_post.call_args[1]["extra_headers"]["Content-Type"],
+            mock_post.call_args[1]["headers"]["Content-Type"],
             "multipart/form-data; boundary=[a-f0-9]{32}",
         )
 
     @patch("yeti.api.requests.Session.post")
     def test_add_observable(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "new_observable"}
+        mock_response.bytes = b'{"id": "new_observable"}'
         mock_post.return_value = mock_response
 
         result = self.api.add_observable("value", "type")
@@ -191,7 +192,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_add_observables_bulk(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"added": [], "failed": []}
+        mock_response.bytes = b'{"added": [], "failed": []}'
         mock_post.return_value = mock_response
 
         result = self.api.add_observables_bulk([{"value": "value", "type": "type"}])
@@ -204,7 +205,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_tag_object(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "tagged_object"}
+        mock_response.bytes = b'{"id": "tagged_object"}'
         mock_post.return_value = mock_response
 
         result = self.api.tag_object({"id": "1", "root_type": "indicator"}, ["tag1"])
@@ -217,7 +218,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_link_objects(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"id": "link"}
+        mock_response.bytes = b'{"id": "link"}'
         mock_post.return_value = mock_response
 
         result = self.api.link_objects(
@@ -239,7 +240,7 @@ class TestYetiApi(unittest.TestCase):
     @patch("yeti.api.requests.Session.post")
     def test_search_graph(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"graph": "data"}
+        mock_response.bytes = b'{"graph": "data"}'
         mock_post.return_value = mock_response
 
         result = self.api.search_graph("source", "graph", ["type"])
