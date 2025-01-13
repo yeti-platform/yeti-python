@@ -39,15 +39,64 @@ class YetiApi:
         }
         self._url_root = url_root
 
+    def do_request(
+        self,
+        method: str,
+        url: str,
+        json_data: dict[str, Any] | None = None,
+        body: bytes | None = None,
+        headers: dict[str, Any] | None = None,
+    ) -> bytes:
+        """Issues a request to the given URL.
+
+        Args:
+            method: The HTTP method to use.
+            url: The URL to issue the request to.
+            json: The JSON payload to include in the request.
+            body: The body to include in the request.
+            headers: Extra headers to include in the request.
+
+        Returns:
+            The response from the API; a bytes object.
+
+        """
+
+        if json_data and body:
+            raise ValueError("You must provide either json or body, not both.")
+
+        request_kwargs = {}
+
+        if headers:
+            request_kwargs["headers"] = headers
+        if json_data:
+            request_kwargs["json"] = json_data
+        if body:
+            request_kwargs["body"] = body
+
+        if method == "POST":
+            response = self.client.post(url, **request_kwargs)
+        elif method == "PATCH":
+            response = self.client.patch(url, **request_kwargs)
+        elif method == "GET":
+            response = self.client.get(url, **request_kwargs)
+        else:
+            raise ValueError(f"Unsupported method: {method}")
+        return response.bytes
+
     def auth_api_key(self, apikey: str) -> None:
         """Authenticates a session using an API key."""
         # Use long-term refresh API token to get an access token
-        response = self.client.post(
+        response = self.do_request(
+            "POST",
             f"{self._url_root}{API_TOKEN_ENDPOINT}",
             headers={"x-yeti-apikey": apikey},
         )
 
-        access_token = json.loads(response.text).get("access_token")
+        access_token = json.loads(response).get("access_token")
+        if not access_token:
+            raise RuntimeError(
+                f"Failed to find access token in the response: {response}"
+            )
         authd_session = requests.Session()
         authd_session.headers.update({"authorization": f"Bearer {access_token}"})
         self.client = authd_session
@@ -88,19 +137,21 @@ class YetiApi:
         if tags:
             query["tags"] = tags
         params = {"query": query, "count": 0}
-        response = self.client.post(
+        response = self.do_request(
+            "POST",
             f"{self._url_root}/api/v2/indicators/search",
-            json=params,
+            json_data=params,
         )
-        return response.json()["indicators"]
+        return json.loads(response)["indicators"]
 
     def search_entities(self, name: str) -> list[YetiObject]:
         params = {"query": {"name": name}, "count": 0}
-        response = self.client.post(
+        response = self.do_request(
+            "POST",
             f"{self._url_root}/api/v2/entities/search",
-            json=params,
+            json_data=params,
         )
-        return response.json()["entities"]
+        return json.loads(response)["entities"]
 
     def search_observables(self, value: str) -> list[YetiObject]:
         """Searches for an observable in Yeti.
@@ -112,10 +163,10 @@ class YetiApi:
           The response from the API; a dict representing the observable.
         """
         params = {"query": {"value": value}, "count": 0}
-        response = self.client.post(
-            f"{self._url_root}/api/v2/observables/search", json=params
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/observables/search", json_data=params
         )
-        return response.json()["observables"]
+        return json.loads(response)["observables"]
 
     def new_entity(
         self, entity: dict[str, Any], tags: list[str] | None = None
@@ -132,8 +183,12 @@ class YetiApi:
         params = {"entity": entity}
         if tags:
             params["tags"] = tags
-        response = self.client.post(f"{self._url_root}/api/v2/entities/", json=params)
-        return response.json()
+        response = self.do_request(
+            "POST",
+            f"{self._url_root}/api/v2/entities/",
+            json_data=params,
+        )
+        return json.loads(response)
 
     def new_indicator(
         self,
@@ -150,12 +205,16 @@ class YetiApi:
           The response from the API; a dict representing the indicator.
         """
         params = {"indicator": indicator}
-        response = self.client.post(f"{self._url_root}/api/v2/indicators/", json=params)
-        indicator = response.json()
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/indicators/", json_data=params
+        )
+        indicator = json.loads(response)
 
         if tags:
             params = {"tags": tags, "ids": [indicator["id"]]}
-            self.client.post(f"{self._url_root}/api/v2/indicators/tag", json=params)
+            self.do_request(
+                "POST", f"{self._url_root}/api/v2/indicators/tag", json_data=params
+            )
 
         return indicator
 
@@ -166,10 +225,10 @@ class YetiApi:
     ) -> YetiObject:
         """Patches an indicator in Yeti."""
         params = {"indicator": indicator_object}
-        response = self.client.patch(
-            f"{self._url_root}/api/v2/indicators/{yeti_id}", json=params
+        response = self.do_request(
+            "PATCH", f"{self._url_root}/api/v2/indicators/{yeti_id}", json_data=params
         )
-        return response.json()
+        return json.loads(response)
 
     def search_dfiq(self, name: str, dfiq_type: str | None = None) -> list[YetiObject]:
         """Searches for a DFIQ in Yeti.
@@ -186,8 +245,10 @@ class YetiApi:
         if dfiq_type:
             query["type"] = dfiq_type
         params = {"query": query, "count": 0}
-        response = self.client.post(f"{self._url_root}/api/v2/dfiq/search", json=params)
-        return response.json()["dfiq"]
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/dfiq/search", json_data=params
+        )
+        return json.loads(response)["dfiq"]
 
     def new_dfiq_from_yaml(self, dfiq_type: str, dfiq_yaml: str) -> YetiObject:
         """Creates a new DFIQ object in Yeti from a YAML string."""
@@ -196,10 +257,10 @@ class YetiApi:
             "dfiq_yaml": dfiq_yaml,
             "update_indicators": True,
         }
-        response = self.client.post(
-            f"{self._url_root}/api/v2/dfiq/from_yaml", json=params
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/dfiq/from_yaml", json_data=params
         )
-        return response.json()
+        return json.loads(response)
 
     def patch_dfiq_from_yaml(
         self,
@@ -213,10 +274,10 @@ class YetiApi:
             "dfiq_yaml": dfiq_yaml,
             "update_indicators": True,
         }
-        response = self.client.patch(
-            f"{self._url_root}/api/v2/dfiq/{yeti_id}", json=params
+        response = self.do_request(
+            "PATCH", f"{self._url_root}/api/v2/dfiq/{yeti_id}", json_data=params
         )
-        return response.json()
+        return json.loads(response)
 
     def download_dfiq_archive(self, dfiq_type: str | None = None) -> bytes:
         """Downloads an archive containing all DFIQ data from Yeti.
@@ -231,10 +292,10 @@ class YetiApi:
         params = {"count": 0}
         if dfiq_type:
             params["query"] = {"type": dfiq_type}
-        response = self.client.post(
-            f"{self._url_root}/api/v2/dfiq/to_archive", json=params
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/dfiq/to_archive", json_data=params
         )
-        return response.bytes
+        return response
 
     def upload_dfiq_archive(self, archive_path: str) -> dict[str, int]:
         """Uploads a DFIQ archive to Yeti.
@@ -253,12 +314,13 @@ class YetiApi:
             fields={"archive": ("archive.zip", data, "application/zip")}
         )
         headers = {"Content-Type": encoded_data.content_type}
-        response = self.client.post(
+        response = self.do_request(
+            "POST",
             f"{self._url_root}/api/v2/dfiq/from_archive",
-            extra_headers=headers,
+            headers=headers,
             body=encoded_data.to_string(),
         )
-        return response.json()
+        return json.loads(response)
 
     def add_observable(
         self, value: str, observable_type: str, tags: list[str] | None = None
@@ -274,10 +336,10 @@ class YetiApi:
           The response from the API; a dict representing the observable.
         """
         params = {"value": value, "type": observable_type, "tags": tags}
-        response = self.client.post(
-            f"{self._url_root}/api/v2/observables/", json=params
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/observables/", json_data=params
         )
-        return response.json()
+        return json.loads(response)
 
     def add_observables_bulk(
         self, observables: list[dict[str, Any]], tags: list[str] | None = None
@@ -306,10 +368,10 @@ class YetiApi:
             "observables": observables,
         }
 
-        response = self.client.post(
-            f"{self._url_root}/api/v2/observables/bulk", json=params
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/observables/bulk", json_data=params
         )
-        return response.json()
+        return json.loads(response)
 
     def tag_object(
         self, yeti_object: dict[str, Any], tags: Sequence[str]
@@ -317,8 +379,10 @@ class YetiApi:
         """Tags an object in Yeti."""
         params = {"tags": list(tags), "ids": [yeti_object["id"]]}
         endpoint = TYPE_TO_ENDPOINT[yeti_object["root_type"]]
-        result = self.client.post(f"{self._url_root}{endpoint}/tag", json=params)
-        return result.json()
+        response = self.do_request(
+            "POST", f"{self._url_root}{endpoint}/tag", json_data=params
+        )
+        return json.loads(response)
 
     def link_objects(
         self,
@@ -347,8 +411,10 @@ class YetiApi:
             "link_type": link_type,
             "description": description,
         }
-        response = self.client.post(f"{self._url_root}/api/v2/graph/add", json=params)
-        return response.json()
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/graph/add", json_data=params
+        )
+        return json.loads(response)
 
     def search_graph(
         self,
@@ -389,7 +455,7 @@ class YetiApi:
             "include_original": include_original,
             "target_types": target_types,
         }
-        response = self.client.post(
-            f"{self._url_root}/api/v2/graph/search", json=params
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/graph/search", json_data=params
         )
-        return response.json()
+        return json.loads(response)
