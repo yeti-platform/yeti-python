@@ -1,11 +1,11 @@
 """Python client for the Yeti API."""
 
-import requests
-import requests_toolbelt.multipart.encoder as encoder
-
 import json
 from typing import Any, Sequence
 
+import yeti.errors as errors
+import requests
+import requests_toolbelt.multipart.encoder as encoder
 
 TYPE_TO_ENDPOINT = {
     "indicator": "/api/v2/indicators",
@@ -73,14 +73,23 @@ class YetiApi:
         if body:
             request_kwargs["body"] = body
 
-        if method == "POST":
-            response = self.client.post(url, **request_kwargs)
-        elif method == "PATCH":
-            response = self.client.patch(url, **request_kwargs)
-        elif method == "GET":
-            response = self.client.get(url, **request_kwargs)
-        else:
-            raise ValueError(f"Unsupported method: {method}")
+        try:
+            if method == "POST":
+                response = self.client.post(url, **request_kwargs)
+            elif method == "PATCH":
+                response = self.client.patch(url, **request_kwargs)
+            elif method == "GET":
+                response = self.client.get(url, **request_kwargs)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
+        except requests.exceptions.HTTPError as e:
+            raise errors.YetiApiError(e.response.status_code, e.response.text)
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise errors.YetiApiError(e.response.status_code, e.response.text)
+
         return response.bytes
 
     def auth_api_key(self, apikey: str) -> None:

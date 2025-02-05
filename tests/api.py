@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from yeti.api import YetiApi
+from yeti import errors
+
+import requests
 
 
 class TestYetiApi(unittest.TestCase):
@@ -258,6 +261,23 @@ class TestYetiApi(unittest.TestCase):
                 "target_types": ["type"],
             },
         )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_error_message(self, mock_post):
+        # create mock requests response that raises an requests.exceptions.HTTPError for status
+        mock_response = MagicMock()
+        mock_exception_with_status_code = requests.exceptions.HTTPError()
+        mock_exception_with_status_code.response = MagicMock()
+        mock_exception_with_status_code.response.status_code = 400
+        mock_exception_with_status_code.response.text = "error_message"
+        mock_response.raise_for_status.side_effect = mock_exception_with_status_code
+        mock_post.return_value = mock_response
+
+        with self.assertRaises(errors.YetiApiError) as raised:
+            self.api.new_indicator({"name": "test_indicator"})
+
+        self.assertEqual(str(raised.exception), "error_message")
+        self.assertEqual(raised.exception.status_code, 400)
 
 
 if __name__ == "__main__":
