@@ -82,10 +82,6 @@ class YetiApi:
                 response = self.client.get(url, **request_kwargs)
             else:
                 raise ValueError(f"Unsupported method: {method}")
-        except requests.exceptions.HTTPError as e:
-            raise errors.YetiApiError(e.response.status_code, e.response.text)
-
-        try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise errors.YetiApiError(e.response.status_code, e.response.text)
