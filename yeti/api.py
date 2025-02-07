@@ -3,9 +3,10 @@
 import json
 from typing import Any, Sequence
 
-import yeti.errors as errors
 import requests
 import requests_toolbelt.multipart.encoder as encoder
+
+import yeti.errors as errors
 
 TYPE_TO_ENDPOINT = {
     "indicator": "/api/v2/indicators",
@@ -86,7 +87,7 @@ class YetiApi:
         except requests.exceptions.HTTPError as e:
             raise errors.YetiApiError(e.response.status_code, e.response.text)
 
-        return response.bytes
+        return response.content
 
     def auth_api_key(self, apikey: str) -> None:
         """Authenticates a session using an API key."""
@@ -463,4 +464,5 @@ class YetiApi:
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/graph/search", json_data=params
         )
+        return json.loads(response)
         return json.loads(response)
