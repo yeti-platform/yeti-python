@@ -465,4 +465,3 @@ class YetiApi:
             "POST", f"{self._url_root}/api/v2/graph/search", json_data=params
         )
         return json.loads(response)
-        return json.loads(response)
