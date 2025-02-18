@@ -150,6 +150,23 @@ class TestYetiApi(unittest.TestCase):
         )
 
     @patch("yeti.api.requests.Session.post")
+    def test_validate_dfiq(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"valid": true, "error": "", "error_type": "message"}'
+        mock_post.return_value = mock_response
+
+        result = self.api.validate_dfiq_yaml("scenario", "yaml_content")
+        self.assertEqual(result["valid"], True)
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/dfiq/validate",
+            json={
+                "dfiq_type": "scenario",
+                "dfiq_yaml": "yaml_content",
+                "check_id": False,
+            },
+        )
+
+    @patch("yeti.api.requests.Session.post")
     def test_download_dfiq_archive(self, mock_post):
         mock_response = MagicMock()
         mock_response.content = b"archive_content"

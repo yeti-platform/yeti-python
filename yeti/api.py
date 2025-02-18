@@ -285,6 +285,29 @@ class YetiApi:
         )
         return json.loads(response)
 
+    def validate_dfiq_yaml(
+        self, dfiq_type: str, dfiq_yaml: str, check_id: bool = False
+    ) -> dict[str, Any]:
+        """Validates a DFIQ object in Yeti from a YAML string.
+
+        Args:
+            dfiq_type: The type of the DFIQ object to validate, e.g. "scenario".
+            dfiq_yaml: The YAML string to validate.
+            check_id: Whether to check if the specified DFIQ ID is available.
+
+        Returns:
+            A dict containing the validation results.
+        """
+        params = {
+            "dfiq_type": dfiq_type,
+            "dfiq_yaml": dfiq_yaml,
+            "check_id": check_id,
+        }
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/dfiq/validate", json_data=params
+        )
+        return json.loads(response)
+
     def download_dfiq_archive(self, dfiq_type: str | None = None) -> bytes:
         """Downloads an archive containing all DFIQ data from Yeti.
 
