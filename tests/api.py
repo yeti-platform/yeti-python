@@ -128,7 +128,6 @@ class TestYetiApi(unittest.TestCase):
             json={
                 "dfiq_type": "type",
                 "dfiq_yaml": "yaml_content",
-                "update_indicators": True,
             },
         )
 
@@ -145,7 +144,6 @@ class TestYetiApi(unittest.TestCase):
             json={
                 "dfiq_type": "type",
                 "dfiq_yaml": "yaml_content",
-                "update_indicators": True,
             },
         )
 

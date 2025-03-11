@@ -39,6 +39,10 @@ class YetiApi:
             "Content-Type": "application/json",
         }
         self._url_root = url_root
+        self._auth_method = ""
+        self._auth_functions = {
+            "auth_api_key": self.auth_api_key,
+        }
 
     def do_request(
         self,
@@ -89,13 +93,18 @@ class YetiApi:
 
         return response.content
 
-    def auth_api_key(self, apikey: str) -> None:
+    def auth_api_key(self, apikey: str | None = None) -> None:
         """Authenticates a session using an API key."""
         # Use long-term refresh API token to get an access token
+        if apikey is not None:
+            self._apikey = apikey
+        if not self._apikey:
+            raise ValueError("No API key provided.")
+
         response = self.do_request(
             "POST",
             f"{self._url_root}{API_TOKEN_ENDPOINT}",
-            headers={"x-yeti-apikey": apikey},
+            headers={"x-yeti-apikey": self._apikey},
         )
 
         access_token = json.loads(response).get("access_token")
@@ -106,6 +115,16 @@ class YetiApi:
         authd_session = requests.Session()
         authd_session.headers.update({"authorization": f"Bearer {access_token}"})
         self.client = authd_session
+
+        self._auth_method = "auth_api_key"
+
+    def refresh_auth(self):
+        if self._auth_method:
+            self._auth_functions[self._auth_method]()
+        else:
+            raise RuntimeError(
+                "No authentication method set. You might have to authenticate first."
+            )
 
     def search_indicators(
         self,
@@ -261,7 +280,6 @@ class YetiApi:
         params = {
             "dfiq_type": dfiq_type,
             "dfiq_yaml": dfiq_yaml,
-            "update_indicators": True,
         }
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/dfiq/from_yaml", json_data=params
