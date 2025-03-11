@@ -278,10 +278,22 @@ class YetiApi:
         params = {
             "dfiq_type": dfiq_type,
             "dfiq_yaml": dfiq_yaml,
-            "update_indicators": True,
         }
         response = self.do_request(
             "PATCH", f"{self._url_root}/api/v2/dfiq/{yeti_id}", json_data=params
+        )
+        return json.loads(response)
+
+    def patch_dfiq(self, dfiq_object: dict[str, Any]) -> YetiObject:
+        """Patches a DFIQ object in Yeti."""
+        params = {
+            "dfiq_type": dfiq_object["type"],
+            "dfiq_object": dfiq_object,
+        }
+        response = self.do_request(
+            "PATCH",
+            f"{self._url_root}/api/v2/dfiq/{dfiq_object['id']}",
+            json_data=params,
         )
         return json.loads(response)
 

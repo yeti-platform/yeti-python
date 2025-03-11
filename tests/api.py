@@ -149,6 +149,24 @@ class TestYetiApi(unittest.TestCase):
             },
         )
 
+    @patch("yeti.api.requests.Session.patch")
+    def test_patch_dfiq(self, mock_patch):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "patched_dfiq"}'
+        mock_patch.return_value = mock_response
+
+        result = self.api.patch_dfiq(
+            {"name": "patched_dfiq", "id": 1, "type": "question"}
+        )
+        self.assertEqual(result, {"id": "patched_dfiq"})
+        mock_patch.assert_called_with(
+            "http://fake-url/api/v2/dfiq/1",
+            json={
+                "dfiq_object": {"name": "patched_dfiq", "type": "question", "id": 1},
+                "dfiq_type": "question",
+            },
+        )
+
     @patch("yeti.api.requests.Session.post")
     def test_download_dfiq_archive(self, mock_post):
         mock_response = MagicMock()
