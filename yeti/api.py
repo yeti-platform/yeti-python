@@ -1,6 +1,7 @@
 """Python client for the Yeti API."""
 
 import json
+import logging
 from typing import Any, Sequence
 
 import requests
@@ -24,6 +25,13 @@ YetiObject = dict[str, Any]
 YetiLinkObject = dict[str, Any]
 
 
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
 class YetiApi:
     """API object to interact with the Yeti API.
 
@@ -40,6 +48,13 @@ class YetiApi:
         }
         self._url_root = url_root
 
+        self._auth_function = ""
+        self._auth_function_map = {
+            "auth_api_key": self.auth_api_key,
+        }
+
+        self._apikey = None
+
     def do_request(
         self,
         method: str,
@@ -47,6 +62,7 @@ class YetiApi:
         json_data: dict[str, Any] | None = None,
         body: bytes | None = None,
         headers: dict[str, Any] | None = None,
+        retries: int = 3,
     ) -> bytes:
         """Issues a request to the given URL.
 
@@ -56,6 +72,7 @@ class YetiApi:
             json: The JSON payload to include in the request.
             body: The body to include in the request.
             headers: Extra headers to include in the request.
+            retries: The number of times to retry the request.
 
         Returns:
             The response from the API; a bytes object.
@@ -85,17 +102,30 @@ class YetiApi:
                 raise ValueError(f"Unsupported method: {method}")
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                if retries == 0:
+                    raise errors.YetiAuthError(str(e)) from e
+                self.refresh_auth()
+                return self.do_request(
+                    method, url, json_data, body, headers, retries - 1
+                )
+
             raise errors.YetiApiError(e.response.status_code, e.response.text)
 
         return response.content
 
-    def auth_api_key(self, apikey: str) -> None:
+    def auth_api_key(self, apikey: str | None = None) -> None:
         """Authenticates a session using an API key."""
         # Use long-term refresh API token to get an access token
+        if apikey is not None:
+            self._apikey = apikey
+        if not self._apikey:
+            raise ValueError("No API key provided.")
+
         response = self.do_request(
             "POST",
             f"{self._url_root}{API_TOKEN_ENDPOINT}",
-            headers={"x-yeti-apikey": apikey},
+            headers={"x-yeti-apikey": self._apikey},
         )
 
         access_token = json.loads(response).get("access_token")
@@ -106,6 +136,14 @@ class YetiApi:
         authd_session = requests.Session()
         authd_session.headers.update({"authorization": f"Bearer {access_token}"})
         self.client = authd_session
+
+        self._auth_function = "auth_api_key"
+
+    def refresh_auth(self):
+        if self._auth_function:
+            self._auth_function_map[self._auth_function]()
+        else:
+            logger.warning("No auth function set, cannot refresh auth.")
 
     def search_indicators(
         self,
@@ -261,7 +299,6 @@ class YetiApi:
         params = {
             "dfiq_type": dfiq_type,
             "dfiq_yaml": dfiq_yaml,
-            "update_indicators": True,
         }
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/dfiq/from_yaml", json_data=params
@@ -278,10 +315,22 @@ class YetiApi:
         params = {
             "dfiq_type": dfiq_type,
             "dfiq_yaml": dfiq_yaml,
-            "update_indicators": True,
         }
         response = self.do_request(
             "PATCH", f"{self._url_root}/api/v2/dfiq/{yeti_id}", json_data=params
+        )
+        return json.loads(response)
+
+    def patch_dfiq(self, dfiq_object: dict[str, Any]) -> YetiObject:
+        """Patches a DFIQ object in Yeti."""
+        params = {
+            "dfiq_type": dfiq_object["type"],
+            "dfiq_object": dfiq_object,
+        }
+        response = self.do_request(
+            "PATCH",
+            f"{self._url_root}/api/v2/dfiq/{dfiq_object['id']}",
+            json_data=params,
         )
         return json.loads(response)
 

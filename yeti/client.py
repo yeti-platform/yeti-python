@@ -13,7 +13,10 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 @click.group()
 @click.option("--api-key", envvar="YETI_API_KEY", required=True, help="Your API key.")
 @click.option(
-    "--endpoint", envvar="YETI_WEB_ROOT", required=True, help="The Yeti endpoint."
+    "--endpoint",
+    envvar="YETI_WEB_ROOT",
+    required=True,
+    help="The Yeti endpoint, e.g. http://localhost:3000/",
 )
 @pass_context  # Add this to pass the context to subcommands
 def cli(ctx, api_key, endpoint):
