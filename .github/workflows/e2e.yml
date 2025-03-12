@@ -5,6 +5,8 @@ on: [pull_request]
 jobs:
   unittest:
     runs-on: ubuntu-latest
+    env:
+      YETI_ENDPOINT: 'http://localhost:80'
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -21,6 +23,8 @@ jobs:
           cache: poetry
       - name: Install a Yeti prod deployment
         run: git clone https://github.com/yeti-platform/yeti-docker && cd yeti-docker/prod && ./init.sh
+        run: sleep 10
+        run: export YETI_API_KEY=$(docker compose run --rm api create-user test test --admin | awk -F'test:' '{print $2}')
       - name: Install Python dependencies
         run: poetry install --no-root
       - name: e2e testing
