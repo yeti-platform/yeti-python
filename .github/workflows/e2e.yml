@@ -1,0 +1,46 @@
+name: e2e tests
+
+on: [pull_request]
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    env:
+      YETI_ENDPOINT: 'http://localhost:80'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip git
+          sudo pip3 install poetry
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+
+      - name: Install a Yeti prod deployment
+        run: |
+          git clone https://github.com/yeti-platform/yeti-docker
+          cd yeti-docker/prod
+          ./init.sh
+          sleep 10
+
+      - name: Create test Yeti user
+        run: |
+          cd yeti-docker/prod
+          echo "YETI_API_KEY=$(docker compose run --rm api create-user test test --admin | awk -F'test:' '{print $2}')" >> $GITHUB_ENV
+
+      - name: Install Python dependencies
+        run: poetry install --no-root
+
+      - name: e2e testing
+        run: |
+          YETI_API_KEY=$YETI_API_KEY poetry run python -m unittest tests/e2e.py

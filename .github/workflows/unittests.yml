@@ -23,4 +23,4 @@ jobs:
         run: poetry install --no-root
       - name: Test with unittest
         run: |
-          poetry run python -m unittest discover -s tests/ -p '*.py'
+          poetry run python -m unittest tests/api.py
