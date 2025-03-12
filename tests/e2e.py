@@ -59,6 +59,7 @@ class YetiEndToEndTest(unittest.TestCase):
                 "diamond": "victim",
             }
         )
+        time.sleep(5)
         result = self.api.search_indicators(name="testSear")
         self.assertEqual(len(result), 1, result)
         self.assertEqual(result[0]["name"], "testSearch")
