@@ -8,11 +8,6 @@ import requests
 from yeti import errors
 from yeti.api import YetiApi
 
-# os.environ["YETI_ENDPOINT"] = "http://dev-frontend-1:3000"
-# os.environ["YETI_API_KEY"] = (
-#     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidGVzdGluZyIsInN1YiI6InlldGkiLCJzY29wZXMiOlsiYWxsIl0sImNyZWF0ZWQiOiIyMDI1LTAzLTExVDIzOjQ1OjU5Ljg3OTQ1OVoiLCJleHAiOm51bGwsImxhc3RfdXNlZCI6bnVsbCwiZW5hYmxlZCI6dHJ1ZSwiZXhwaXJlZCI6ZmFsc2V9.yTidlJ5r8mURLpV9ER3APpO5MlPoG30Z0PqtMLbY1Vg"
-# )
-
 
 class YetiEndToEndTest(unittest.TestCase):
     def setUp(self):
@@ -54,5 +49,16 @@ class YetiEndToEndTest(unittest.TestCase):
 
     def test_search_indicators(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
-        result = self.api.search_indicators(name="test")
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        indicator = self.api.new_indicator(
+            {
+                "name": "testSearch",
+                "type": "regex",
+                "description": "test",
+                "pattern": "test[0-9]",
+                "diamond": "victim",
+            }
+        )
+        result = self.api.search_indicators(name="testSear")
         self.assertEqual(len(result), 1, result)
+        self.assertEqual(result[0]["name"], "testSearch")
