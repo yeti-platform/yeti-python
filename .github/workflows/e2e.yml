@@ -27,6 +27,8 @@ jobs:
         run: cd yeti-docker/prod && export YETI_API_KEY=$(docker compose run --rm api create-user test test --admin | awk -F'test:' '{print $2}')
       - name: Install Python dependencies
         run: poetry install --no-root
+      - name: Check env variables
+        run: env
       - name: e2e testing
         run: |
-          poetry run python -m unittest tests/e2e.py
+          YETI_API_KEY=$YETI_API_KEY poetry run python -m unittest tests/e2e.py
