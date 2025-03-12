@@ -1,6 +1,7 @@
 """Python client for the Yeti API."""
 
 import json
+import logging
 from typing import Any, Sequence
 
 import requests
@@ -24,6 +25,13 @@ YetiObject = dict[str, Any]
 YetiLinkObject = dict[str, Any]
 
 
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
 class YetiApi:
     """API object to interact with the Yeti API.
 
@@ -39,10 +47,13 @@ class YetiApi:
             "Content-Type": "application/json",
         }
         self._url_root = url_root
-        self._auth_method = ""
-        self._auth_functions = {
+
+        self._auth_function = ""
+        self._auth_function_map = {
             "auth_api_key": self.auth_api_key,
         }
+
+        self._apikey = None
 
     def do_request(
         self,
@@ -51,6 +62,7 @@ class YetiApi:
         json_data: dict[str, Any] | None = None,
         body: bytes | None = None,
         headers: dict[str, Any] | None = None,
+        retries: int = 3,
     ) -> bytes:
         """Issues a request to the given URL.
 
@@ -60,6 +72,7 @@ class YetiApi:
             json: The JSON payload to include in the request.
             body: The body to include in the request.
             headers: Extra headers to include in the request.
+            retries: The number of times to retry the request.
 
         Returns:
             The response from the API; a bytes object.
@@ -89,6 +102,14 @@ class YetiApi:
                 raise ValueError(f"Unsupported method: {method}")
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                if retries == 0:
+                    raise errors.YetiAuthError(str(e)) from e
+                self.refresh_auth()
+                return self.do_request(
+                    method, url, json_data, body, headers, retries - 1
+                )
+
             raise errors.YetiApiError(e.response.status_code, e.response.text)
 
         return response.content
@@ -116,15 +137,13 @@ class YetiApi:
         authd_session.headers.update({"authorization": f"Bearer {access_token}"})
         self.client = authd_session
 
-        self._auth_method = "auth_api_key"
+        self._auth_function = "auth_api_key"
 
     def refresh_auth(self):
-        if self._auth_method:
-            self._auth_functions[self._auth_method]()
+        if self._auth_function:
+            self._auth_function_map[self._auth_function]()
         else:
-            raise RuntimeError(
-                "No authentication method set. You might have to authenticate first."
-            )
+            logger.warning("No auth function set, cannot refresh auth.")
 
     def search_indicators(
         self,
