@@ -24,7 +24,7 @@ jobs:
       - name: Install a Yeti prod deployment
         run: git clone https://github.com/yeti-platform/yeti-docker && cd yeti-docker/prod && ./init.sh && sleep 10
       - name: Create test Yeti user
-        run: export YETI_API_KEY=$(docker compose run --rm api create-user test test --admin | awk -F'test:' '{print $2}')
+        run: cd yeti-docker/prod && export YETI_API_KEY=$(docker compose run --rm api create-user test test --admin | awk -F'test:' '{print $2}')
       - name: Install Python dependencies
         run: poetry install --no-root
       - name: e2e testing
