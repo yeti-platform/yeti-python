@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Python
 RUN apt-get update && apt-get install -y \
@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     git
 
 # Upgrade pip
-RUN pip3 install --upgrade pip && pip3 install poetry
+RUN pip3 install poetry --break-system-packages
 
 COPY extras/docker-entrypoint.sh /docker-entrypoint.sh
 

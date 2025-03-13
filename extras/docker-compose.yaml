@@ -6,3 +6,6 @@ services:
         dockerfile: ./extras/Dockerfile
     volumes:
         - ../:/app/
+    entrypoint: /bin/bash
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
