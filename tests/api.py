@@ -295,6 +295,30 @@ class TestYetiApi(unittest.TestCase):
         self.assertEqual(str(raised.exception), "error_message")
         self.assertEqual(raised.exception.status_code, 400)
 
+    @patch("yeti.api.requests.Session.post")
+    def test_get_yara_bundle_with_overlays(self, mock_post):
+        # Mock the YARA bundle response
+        mock_response = MagicMock()
+        mock_response.content = b'{"bundle": "bundlestring"}'
+        mock_post.return_value = mock_response
+
+        # Call the method with overlays
+        result = self.api.get_yara_bundle_with_overlays(
+            overlays=["overlay1", "overlay2"]
+        )
+
+        # Check the result
+        self.assertEqual(result, {"bundle": "bundlestring"})
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/indicators/yara/bundle",
+            json={
+                "ids": [],
+                "tags": [],
+                "exclude_tags": [],
+                "overlays": ["overlay1", "overlay2"],
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
