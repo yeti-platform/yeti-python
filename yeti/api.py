@@ -274,6 +274,45 @@ class YetiApi:
         )
         return json.loads(response)
 
+    def get_yara_bundle_with_overlays(
+        self,
+        ids: list[str] | None = None,
+        tags: list[str] | None = None,
+        exclude_tags: list[str] | None = None,
+        overlays: list[str] | None = None,
+    ) -> str:
+        """Gets a Yara bundle with overlays.
+
+        Args:
+            ids: The list of IDs to include in the bundle.
+            tags: Include Yara rules with this tag in the bundle.
+            exclude_tags: Remove Yara rules with this tag from the bundle.
+            overlays: The list of overlays to include in the bundle.
+        """
+        if ids is None:
+            ids = []
+        if tags is None:
+            tags = []
+        if exclude_tags is None:
+            exclude_tags = []
+        if overlays is None:
+            overlays = []
+
+        params = {
+            "ids": ids,
+            "tags": tags,
+            "exclude_tags": exclude_tags,
+            "overlays": overlays,
+        }
+
+        result = self.do_request(
+            "POST",
+            f"{self._url_root}/api/v2/indicators/yara/bundle",
+            json_data=params,
+        )
+
+        return json.loads(result)
+
     def search_dfiq(self, name: str, dfiq_type: str | None = None) -> list[YetiObject]:
         """Searches for a DFIQ in Yeti.
 
