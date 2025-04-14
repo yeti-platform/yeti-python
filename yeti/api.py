@@ -280,7 +280,7 @@ class YetiApi:
         tags: list[str] | None = None,
         exclude_tags: list[str] | None = None,
         overlays: list[str] | None = None,
-    ) -> str:
+    ) -> dict[str, str]:
         """Gets a Yara bundle with overlays.
 
         Args:
