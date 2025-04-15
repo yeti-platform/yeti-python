@@ -63,6 +63,19 @@ class TestYetiApi(unittest.TestCase):
         )
 
     @patch("yeti.api.requests.Session.post")
+    def test_search_bloom(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'[{"value": "test.com", "hits": ["filter1"]}]'
+        mock_post.return_value = mock_response
+
+        result = self.api.search_bloom(["test.com"])
+        self.assertEqual(result, [{"value": "test.com", "hits": ["filter1"]}])
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/bloom/search",
+            json={"values": ["test.com"]},
+        )
+
+    @patch("yeti.api.requests.Session.post")
     def test_new_entity(self, mock_post):
         mock_response = MagicMock()
         mock_response.content = b'{"id": "new_entity"}'
