@@ -212,6 +212,23 @@ class YetiApi:
         )
         return json.loads(response)["observables"]
 
+    def search_bloom(self, values: list[str]) -> list[dict[str, Any]]:
+        """Searches for a list of observable values in Yeti's bloom filters.
+
+        Args:
+          values: The list of observable values to search for.
+
+        Returns:
+          A list of dicts representing hits, e.g.
+
+            {"value": "example.com", hits:["filter1"]}
+        """
+        params = {"values": values}
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/bloom/search", json_data=params
+        )
+        return json.loads(response)
+
     def new_entity(
         self, entity: dict[str, Any], tags: list[str] | None = None
     ) -> YetiObject:
