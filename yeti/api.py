@@ -2,6 +2,7 @@
 
 import json
 import logging
+import urllib.parse
 from typing import Any, Sequence
 
 import requests
@@ -63,6 +64,7 @@ class YetiApi:
         body: bytes | None = None,
         headers: dict[str, Any] | None = None,
         retries: int = 3,
+        params: dict[str, Any] | None = None,
     ) -> bytes:
         """Issues a request to the given URL.
 
@@ -73,6 +75,7 @@ class YetiApi:
             body: The body to include in the request.
             headers: Extra headers to include in the request.
             retries: The number of times to retry the request.
+            params: The query parameters to include in the request.
 
         Returns:
             The response from the API; a bytes object.
@@ -90,6 +93,8 @@ class YetiApi:
             request_kwargs["json"] = json_data
         if body:
             request_kwargs["body"] = body
+        if params:
+            url = f"{url}?{urllib.parse.urlencode(params)}"
 
         try:
             if method == "POST":
@@ -145,6 +150,28 @@ class YetiApi:
         else:
             logger.warning("No auth function set, cannot refresh auth.")
 
+    def find_indicator(self, name: str, type: str) -> YetiObject | None:
+        """Finds an indicator in Yeti by name and type.
+
+        Args:
+          name: The name of the indicator to find.
+          type: The type of the indicator to find.
+
+        Returns:
+          The response from the API; a dict representing the indicator.
+        """
+        try:
+            response = self.do_request(
+                "GET",
+                f"{self._url_root}/api/v2/indicators/",
+                params={"name": name, "type": type},
+            )
+        except errors.YetiApiError as e:
+            if e.status_code == 404:
+                return None
+            raise
+        return json.loads(response)
+
     def search_indicators(
         self,
         name: str | None = None,
@@ -163,7 +190,7 @@ class YetiApi:
           tags: The tags of the indicator to search for.
 
         Returns:
-          The response from the API; a dict representing the indicator.
+          The response from the API; a list of dicts representing indicators.
         """
 
         if not any([name, indicator_type, pattern, tags]):
@@ -188,6 +215,28 @@ class YetiApi:
         )
         return json.loads(response)["indicators"]
 
+    def find_entity(self, name: str, type: str) -> YetiObject | None:
+        """Finds an entity in Yeti by name.
+
+        Args:
+          name: The name of the entity to find.
+          type: The type of the entity to find.
+
+        Returns:
+          The response from the API; a dict representing the entity.
+        """
+        try:
+            response = self.do_request(
+                "GET",
+                f"{self._url_root}/api/v2/entities/",
+                params={"name": name, "type": type},
+            )
+        except errors.YetiApiError as e:
+            if e.status_code == 404:
+                return None
+            raise
+        return json.loads(response)
+
     def search_entities(self, name: str) -> list[YetiObject]:
         params = {"query": {"name": name}, "count": 0}
         response = self.do_request(
@@ -196,6 +245,28 @@ class YetiApi:
             json_data=params,
         )
         return json.loads(response)["entities"]
+
+    def find_observable(self, value: str, type: str) -> YetiObject | None:
+        """Finds an observable in Yeti by value and type.
+
+        Args:
+          value: The value of the observable to find.
+          type: The type of the observable to find.
+
+        Returns:
+          The response from the API; a dict representing the observable.
+        """
+        try:
+            response = self.do_request(
+                "GET",
+                f"{self._url_root}/api/v2/observables/",
+                params={"value": value, "type": type},
+            )
+        except errors.YetiApiError as e:
+            if e.status_code == 404:
+                return None
+            raise
+        return json.loads(response)
 
     def search_observables(self, value: str) -> list[YetiObject]:
         """Searches for an observable in Yeti.
@@ -329,6 +400,28 @@ class YetiApi:
         )
 
         return json.loads(result)
+
+    def find_dfiq(self, name: str, dfiq_type: str) -> YetiObject | None:
+        """Finds a DFIQ in Yeti by name and type.
+
+        Args:
+          name: The name of the DFIQ to find.
+          dfiq_type: The type of the DFIQ to find.
+
+        Returns:
+          The response from the API; a dict representing the DFIQ object.
+        """
+        try:
+            response = self.do_request(
+                "GET",
+                f"{self._url_root}/api/v2/dfiq/",
+                params={"name": name, "type": dfiq_type},
+            )
+        except errors.YetiApiError as e:
+            if e.status_code == 404:
+                return None
+            raise
+        return json.loads(response)
 
     def search_dfiq(self, name: str, dfiq_type: str | None = None) -> list[YetiObject]:
         """Searches for a DFIQ in Yeti.
