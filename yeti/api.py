@@ -71,7 +71,7 @@ class YetiApi:
         Args:
             method: The HTTP method to use.
             url: The URL to issue the request to.
-            json: The JSON payload to include in the request.
+            json_data: The JSON payload to include in the request.
             body: The body to include in the request.
             headers: Extra headers to include in the request.
             retries: The number of times to retry the request.
