@@ -67,7 +67,17 @@ class YetiEndToEndTest(unittest.TestCase):
     def test_find_indicator(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
-        indicator = self.api.find_indicator(name="testSearch", type="regex")
+        self.api.new_indicator(
+            {
+                "name": "testGet",
+                "type": "regex",
+                "description": "test",
+                "pattern": "test[0-9]",
+                "diamond": "victim",
+            }
+        )
+        time.sleep(5)
+        indicator = self.api.find_indicator(name="testGet", type="regex")
 
-        self.assertEqual(indicator["name"], "testSearch")
+        self.assertEqual(indicator["name"], "testGet")
         self.assertEqual(indicator["pattern"], "test[0-9]")
