@@ -332,6 +332,94 @@ class TestYetiApi(unittest.TestCase):
             },
         )
 
+    @patch("yeti.api.requests.Session.get")
+    def test_find_indicator(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "found_indicator"}'
+        mock_get.return_value = mock_response
+
+        result = self.api.find_indicator(name="test_indicator", type="indicator.test")
+        self.assertEqual(result, {"id": "found_indicator"})
+        mock_get.assert_called_with(
+            "http://fake-url/api/v2/indicators/?name=test_indicator&type=indicator.test",
+        )
+
+        # Test 404 case
+        mock_exception_with_status_code = requests.exceptions.HTTPError()
+        mock_exception_with_status_code.response = MagicMock()
+        mock_exception_with_status_code.response.status_code = 404
+        mock_response.raise_for_status.side_effect = mock_exception_with_status_code
+        mock_get.return_value = mock_response
+
+        result = self.api.find_indicator(name="not_found", type="indicator.test")
+        self.assertIsNone(result)
+
+    @patch("yeti.api.requests.Session.get")
+    def test_find_entity(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "found_entity"}'
+        mock_get.return_value = mock_response
+
+        result = self.api.find_entity(name="test_entity", type="entity.test")
+        self.assertEqual(result, {"id": "found_entity"})
+        mock_get.assert_called_with(
+            "http://fake-url/api/v2/entities/?name=test_entity&type=entity.test",
+        )
+
+        # Test 404 case
+        mock_exception_with_status_code = requests.exceptions.HTTPError()
+        mock_exception_with_status_code.response = MagicMock()
+        mock_exception_with_status_code.response.status_code = 404
+        mock_response.raise_for_status.side_effect = mock_exception_with_status_code
+        mock_get.return_value = mock_response
+
+        result = self.api.find_entity(name="not_found", type="entity.test")
+        self.assertIsNone(result)
+
+    @patch("yeti.api.requests.Session.get")
+    def test_find_observable(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "found_observable"}'
+        mock_get.return_value = mock_response
+
+        result = self.api.find_observable(value="test_value", type="observable.test")
+        self.assertEqual(result, {"id": "found_observable"})
+        mock_get.assert_called_with(
+            "http://fake-url/api/v2/observables/?value=test_value&type=observable.test",
+        )
+
+        # Test 404 case
+        mock_exception_with_status_code = requests.exceptions.HTTPError()
+        mock_exception_with_status_code.response = MagicMock()
+        mock_exception_with_status_code.response.status_code = 404
+        mock_response.raise_for_status.side_effect = mock_exception_with_status_code
+        mock_get.return_value = mock_response
+
+        result = self.api.find_observable(value="not_found", type="observable.test")
+        self.assertIsNone(result)
+
+    @patch("yeti.api.requests.Session.get")
+    def test_find_dfiq(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "found_dfiq"}'
+        mock_get.return_value = mock_response
+
+        result = self.api.find_dfiq(name="test_dfiq", dfiq_type="scenario")
+        self.assertEqual(result, {"id": "found_dfiq"})
+        mock_get.assert_called_with(
+            "http://fake-url/api/v2/dfiq/?name=test_dfiq&type=scenario",
+        )
+
+        # Test 404 case
+        mock_exception_with_status_code = requests.exceptions.HTTPError()
+        mock_exception_with_status_code.response = MagicMock()
+        mock_exception_with_status_code.response.status_code = 404
+        mock_response.raise_for_status.side_effect = mock_exception_with_status_code
+        mock_get.return_value = mock_response
+
+        result = self.api.find_dfiq(name="not_found", dfiq_type="scenario")
+        self.assertIsNone(result)
+
 
 if __name__ == "__main__":
     unittest.main()
