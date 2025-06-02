@@ -306,14 +306,14 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"graph": "data"}'
         mock_post.return_value = mock_response
 
-        result = self.api.search_graph("source", "graph", ["type"])
+        result = self.api.search_graph("source", ["type"])
         self.assertEqual(result, {"graph": "data"})
         mock_post.assert_called_with(
             "http://fake-url/api/v2/graph/search",
             json={
                 "count": 0,
                 "source": "source",
-                "graph": "graph",
+                "graph": "links",
                 "min_hops": 1,
                 "max_hops": 1,
                 "direction": "outbound",

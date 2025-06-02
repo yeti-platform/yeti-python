@@ -688,6 +688,7 @@ class YetiApi:
         self,
         source: str,
         target_types: list[str],
+        graph: str = "links",
         min_hops: int = 1,
         max_hops: int = 1,
         direction: str = "outbound",
@@ -714,7 +715,7 @@ class YetiApi:
         params = {
             "count": 0,
             "source": source,
-            "graph": "links",
+            "graph": graph,
             "min_hops": min_hops,
             "max_hops": max_hops,
             "direction": direction,
