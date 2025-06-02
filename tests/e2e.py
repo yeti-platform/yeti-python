@@ -82,3 +82,39 @@ class YetiEndToEndTest(unittest.TestCase):
 
         self.assertEqual(indicator["name"], "testGet")
         self.assertEqual(indicator["pattern"], "test[0-9]")
+
+    def test_link_objects(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        indicator = self.api.new_indicator(
+            {
+                "name": "testLink",
+                "type": "regex",
+                "description": "test",
+                "pattern": "test[0-9]",
+                "diamond": "victim",
+            }
+        )
+        malware = self.api.new_entity(
+            {
+                "name": "testMalware",
+                "type": "malware",
+                "description": "test",
+            }
+        )
+        self.api.link_objects(
+            source=indicator,
+            target=malware,
+            link_type="indicates",
+            description="test link",
+        )
+
+        # get neighbors
+        neighbors = self.api.search_graph(
+            f'indicator/{indicator["id"]}',
+            target_types=["malware"],
+            include_original=False,
+        )
+        self.assertEqual(len(neighbors["vertices"]), 1)
+        self.assertEqual(
+            neighbors["vertices"][f'entities/{malware["id"]}']["name"], "testMalware"
+        )
