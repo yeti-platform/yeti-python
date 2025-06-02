@@ -29,11 +29,21 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"indicators": [{"name": "test"}]}'
         mock_post.return_value = mock_response
 
-        result = self.api.search_indicators(name="test")
+        result = self.api.search_indicators(
+            name="test", description="test_description", tags=["tag1"]
+        )
         self.assertEqual(result, [{"name": "test"}])
         mock_post.assert_called_with(
             "http://fake-url/api/v2/indicators/search",
-            json={"query": {"name": "test"}, "count": 0},
+            json={
+                "query": {
+                    "name": "test",
+                    "description": "test_description",
+                    "tags": ["tag1"],
+                },
+                "count": 100,
+                "page": 0,
+            },
         )
 
     @patch("yeti.api.requests.Session.post")
@@ -42,11 +52,17 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"entities": [{"name": "test_entity"}]}'
         mock_post.return_value = mock_response
 
-        result = self.api.search_entities(name="test_entity")
+        result = self.api.search_entities(
+            name="test_entity", description="test_description"
+        )
         self.assertEqual(result, [{"name": "test_entity"}])
         mock_post.assert_called_with(
             "http://fake-url/api/v2/entities/search",
-            json={"query": {"name": "test_entity"}, "count": 0},
+            json={
+                "query": {"name": "test_entity", "description": "test_description"},
+                "count": 100,
+                "page": 0,
+            },
         )
 
     @patch("yeti.api.requests.Session.post")
@@ -55,11 +71,15 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"observables": [{"value": "test_value"}]}'
         mock_post.return_value = mock_response
 
-        result = self.api.search_observables(value="test_value")
+        result = self.api.search_observables(value="test_value", tags=["tag1"])
         self.assertEqual(result, [{"value": "test_value"}])
         mock_post.assert_called_with(
             "http://fake-url/api/v2/observables/search",
-            json={"query": {"value": "test_value"}, "count": 0},
+            json={
+                "query": {"value": "test_value", "tags": ["tag1"]},
+                "count": 100,
+                "page": 0,
+            },
         )
 
     @patch("yeti.api.requests.Session.post")
@@ -121,11 +141,22 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"dfiq": [{"name": "test_dfiq"}]}'
         mock_post.return_value = mock_response
 
-        result = self.api.search_dfiq(name="test_dfiq")
+        result = self.api.search_dfiq(
+            name="test_dfiq", dfiq_yaml="yaml_content", dfiq_tags=["tag1"]
+        )
         self.assertEqual(result, [{"name": "test_dfiq"}])
         mock_post.assert_called_with(
             "http://fake-url/api/v2/dfiq/search",
-            json={"query": {"name": "test_dfiq"}, "count": 0},
+            json={
+                "query": {
+                    "name": "test_dfiq",
+                    "dfiq_yaml": "yaml_content",
+                    "dfiq_tags": ["tag1"],
+                    "filter_aliases": [["dfiq_tags", "list"], ["dfiq_id", "text"]],
+                },
+                "count": 100,
+                "page": 0,
+            },
         )
 
     @patch("yeti.api.requests.Session.post")

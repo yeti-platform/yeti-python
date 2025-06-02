@@ -271,8 +271,8 @@ class YetiApi:
         query = {}
         if name:
             query["name"] = name
-        if type:
-            query["type"] = type
+        if entity_type:
+            query["type"] = entity_type
         if description:
             query["description"] = description
 
