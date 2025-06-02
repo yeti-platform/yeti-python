@@ -693,6 +693,8 @@ class YetiApi:
         max_hops: int = 1,
         direction: str = "outbound",
         include_original: bool = True,
+        count: int = 50,
+        page: int = 0,
     ) -> dict[str, Any]:
         """Searches the graph for objects related to a given object.
 
@@ -713,7 +715,8 @@ class YetiApi:
           The response from the API; a dict representing the graph.
         """
         params = {
-            "count": 0,
+            "count": count,
+            "page": page,
             "source": source,
             "graph": graph,
             "min_hops": min_hops,
