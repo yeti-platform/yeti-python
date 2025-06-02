@@ -190,7 +190,7 @@ class YetiApi:
           name: The name of the indicator to search for.
           indicator_type: The type of the indicator to search for.
           pattern: The pattern of the indicator to search for.
-          description: The description of the indicator to search for. (substring match))
+          description: The description of the indicator to search for. (substring match)
           tags: The tags of the indicator to search for.
 
         Returns:
@@ -259,13 +259,13 @@ class YetiApi:
             name: The name of the entity to search for (substring match).
             entity_type: The type of the entity to search for.
             description: The description of the entity to search for. (substring match)
-            count: The number of results to return (default is 0, which means all).
+            count: The number of results to return (default is 100, which means all).
             page: The page of results to return (default is 0, which means the first page).
 
         Returns:
             The response from the API; a list of dicts representing entities.
         """
-        if not any([name, type, description]):
+        if not any([name, entity_type, description]):
             raise ValueError("You must provide one of name, type, or description.")
 
         query = {}
@@ -483,12 +483,16 @@ class YetiApi:
         """Searches for a DFIQ in Yeti.
 
         Args:
-          name: The name of the DFIQ object to search for, e.g. "Suspicious DNS
+            name: The name of the DFIQ object to search for, e.g. "Suspicious DNS
             Query."
-          dfiq_type: The type of the DFIQ object to search for, e.g. "scenario".
+            dfiq_type: The type of the DFIQ object to search for, e.g. "scenario".
+            dfiq_yaml: The YAML content of the DFIQ object to search for.
+            dfiq_tags: The tags of the DFIQ object to search for.
+            count: The number of results to return (default is 100, which means all).
+            page: The page of results to return (default is 0, which means the first page).
 
         Returns:
-          The response from the API; a dict representing the DFIQ object.
+            The response from the API; a dict representing the DFIQ object.
         """
         query = {
             "name": name,
