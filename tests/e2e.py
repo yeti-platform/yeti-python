@@ -56,8 +56,8 @@ class YetiEndToEndTest(unittest.TestCase):
                 "description": "test",
                 "pattern": "test[0-9]",
                 "diamond": "victim",
-                "tags": ["testTag"],
-            }
+            },
+            tags=["testTag"],
         )
         time.sleep(5)
         result = self.api.search_indicators(
