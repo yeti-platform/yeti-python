@@ -311,7 +311,8 @@ class TestYetiApi(unittest.TestCase):
         mock_post.assert_called_with(
             "http://fake-url/api/v2/graph/search",
             json={
-                "count": 0,
+                "count": 50,
+                "page": 0,
                 "source": "source",
                 "graph": "links",
                 "min_hops": 1,
