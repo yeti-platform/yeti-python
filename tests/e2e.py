@@ -56,11 +56,12 @@ class YetiEndToEndTest(unittest.TestCase):
                 "description": "test",
                 "pattern": "test[0-9]",
                 "diamond": "victim",
+                "tags": ["testTag"],
             }
         )
         time.sleep(5)
         result = self.api.search_indicators(
-            name="testSear", description="test", tags=["testTag"]
+            name="testSear", description="tes", tags=["testTag"]
         )
         self.assertEqual(len(result), 1, result)
         self.assertEqual(result[0]["name"], "testSearch")
