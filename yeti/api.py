@@ -687,7 +687,6 @@ class YetiApi:
     def search_graph(
         self,
         source: str,
-        graph: str,
         target_types: list[str],
         min_hops: int = 1,
         max_hops: int = 1,
@@ -702,12 +701,11 @@ class YetiApi:
 
         Args:
           source: The ID of the source object (as provided by Yeti) in the format
-            "<root_type>/<id>", such as 'dfiq/id'.
-          graph: The graph to search, such as 'links'.
+            "<root_type>/<id>", such as 'dfiq/12345'.
           target_types: The types of objects to search for.
           min_hops: The minimum number of hops to search.
           max_hops: The maximum number of hops to search.
-          direction: The direction to search.
+          direction: The direction to search. "inbound" or "outbound" or "both".
           include_original: Whether to include the source object in the results.
 
         Returns:
@@ -716,7 +714,7 @@ class YetiApi:
         params = {
             "count": 0,
             "source": source,
-            "graph": graph,
+            "graph": "links",
             "min_hops": min_hops,
             "max_hops": max_hops,
             "direction": direction,
