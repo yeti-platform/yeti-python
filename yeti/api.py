@@ -190,7 +190,7 @@ class YetiApi:
           name: The name of the indicator to search for.
           indicator_type: The type of the indicator to search for.
           pattern: The pattern of the indicator to search for.
-          description: The description of the indicator to search for.
+          description: The description of the indicator to search for. (substring match))
           tags: The tags of the indicator to search for.
 
         Returns:
@@ -258,7 +258,7 @@ class YetiApi:
         Args:
             name: The name of the entity to search for (substring match).
             entity_type: The type of the entity to search for.
-            description: The description of the entity to search for.
+            description: The description of the entity to search for. (substring match)
             count: The number of results to return (default is 0, which means all).
             page: The page of results to return (default is 0, which means the first page).
 
