@@ -177,25 +177,29 @@ class YetiApi:
         name: str | None = None,
         indicator_type: str | None = None,
         pattern: str | None = None,
+        description: str | None = None,
         tags: list[str] | None = None,
+        count: int = 100,
+        page: int = 0,
     ) -> list[YetiObject]:
         """Searches for an indicator in Yeti.
 
-        One of name or pattern must be provided.
+        One of name, indicator_type, pattern, description, or tags must be provided.
 
         Args:
           name: The name of the indicator to search for.
           indicator_type: The type of the indicator to search for.
           pattern: The pattern of the indicator to search for.
+          description: The description of the indicator to search for.
           tags: The tags of the indicator to search for.
 
         Returns:
           The response from the API; a list of dicts representing indicators.
         """
 
-        if not any([name, indicator_type, pattern, tags]):
+        if not any([name, indicator_type, pattern, description, tags]):
             raise ValueError(
-                "You must provide one of name, indicator_type, pattern, or tags."
+                "You must provide one of name, indicator_type, pattern, description, or tags."
             )
 
         query = {}
@@ -203,11 +207,13 @@ class YetiApi:
             query["name"] = name
         if pattern:
             query["pattern"] = pattern
+        if description:
+            query["description"] = description
         if indicator_type:
             query["type"] = indicator_type
         if tags:
             query["tags"] = tags
-        params = {"query": query, "count": 0}
+        params = {"query": query, "count": count, "page": page}
         response = self.do_request(
             "POST",
             f"{self._url_root}/api/v2/indicators/search",
@@ -237,8 +243,40 @@ class YetiApi:
             raise
         return json.loads(response)
 
-    def search_entities(self, name: str) -> list[YetiObject]:
-        params = {"query": {"name": name}, "count": 0}
+    def search_entities(
+        self,
+        name: str | None = None,
+        entity_type: str | None = None,
+        description: str | None = None,
+        count: int = 100,
+        page: int = 0,
+    ) -> list[YetiObject]:
+        """Searches for entities in Yeti.
+
+        One of name, type, or description must be provided.
+
+        Args:
+            name: The name of the entity to search for (substring match).
+            entity_type: The type of the entity to search for.
+            description: The description of the entity to search for.
+            count: The number of results to return (default is 0, which means all).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            The response from the API; a list of dicts representing entities.
+        """
+        if not any([name, type, description]):
+            raise ValueError("You must provide one of name, type, or description.")
+
+        query = {}
+        if name:
+            query["name"] = name
+        if type:
+            query["type"] = type
+        if description:
+            query["description"] = description
+
+        params = {"query": query, "count": count, "page": page}
         response = self.do_request(
             "POST",
             f"{self._url_root}/api/v2/entities/search",
@@ -268,8 +306,14 @@ class YetiApi:
             raise
         return json.loads(response)
 
-    def search_observables(self, value: str) -> list[YetiObject]:
-        """Searches for an observable in Yeti.
+    def search_observables(
+        self,
+        value: str,
+        count: int = 100,
+        page: int = 0,
+        tags: list[str] | None = None,
+    ) -> list[YetiObject]:
+        """Searches for observables in Yeti.
 
         Args:
           value: The value of the observable to search for.
@@ -277,7 +321,11 @@ class YetiApi:
         Returns:
           The response from the API; a dict representing the observable.
         """
-        params = {"query": {"value": value}, "count": 0}
+        query = {"value": value}
+        if tags:
+            query["tags"] = tags
+        params = {"query": query, "count": count, "page": page}
+
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/observables/search", json_data=params
         )
@@ -423,7 +471,15 @@ class YetiApi:
             raise
         return json.loads(response)
 
-    def search_dfiq(self, name: str, dfiq_type: str | None = None) -> list[YetiObject]:
+    def search_dfiq(
+        self,
+        name: str,
+        dfiq_type: str | None = None,
+        dfiq_yaml: str | None = None,
+        dfiq_tags: list[str] | None = None,
+        count: int = 100,
+        page: int = 0,
+    ) -> list[YetiObject]:
         """Searches for a DFIQ in Yeti.
 
         Args:
@@ -434,10 +490,18 @@ class YetiApi:
         Returns:
           The response from the API; a dict representing the DFIQ object.
         """
-        query = {"name": name}
+        query = {
+            "name": name,
+            "filter_aliases": [["dfiq_tags", "list"], ["dfiq_id", "text"]],
+        }
+
         if dfiq_type:
             query["type"] = dfiq_type
-        params = {"query": query, "count": 0}
+        if dfiq_yaml:
+            query["dfiq_yaml"] = dfiq_yaml
+        if dfiq_tags:
+            query["dfiq_tags"] = dfiq_tags
+        params = {"query": query, "count": count, "page": page}
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/dfiq/search", json_data=params
         )
