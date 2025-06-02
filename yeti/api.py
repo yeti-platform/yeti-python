@@ -703,16 +703,19 @@ class YetiApi:
         for details.
 
         Args:
-          source: The ID of the source object (as provided by Yeti) in the format
-            "<root_type>/<id>", such as 'dfiq/12345'.
-          target_types: The types of objects to search for.
-          min_hops: The minimum number of hops to search.
-          max_hops: The maximum number of hops to search.
-          direction: The direction to search. "inbound" or "outbound" or "both".
-          include_original: Whether to include the source object in the results.
+            source: The ID of the source object (as provided by Yeti) in the format
+              "<root_type>/<id>", such as 'dfiq/12345'.
+            target_types: The types of objects to search for.
+            min_hops: The minimum number of hops to search.
+            max_hops: The maximum number of hops to search.
+            direction: The direction to search. "inbound" or "outbound" or "both".
+            include_original: Whether to include the source object in the results.
+            count: The number of results to return (default is 50).
+            page: The page of results to return (default is 0, which means the first page).
 
         Returns:
-          The response from the API; a dict representing the graph.
+          The response from the API; a dict representing the graph. If the number
+          of results is lower than the count, the search is complete.
         """
         params = {
             "count": count,
