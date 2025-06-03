@@ -339,7 +339,7 @@ class YetiApi:
         """
         params = {
             "observables": observables,
-            "add_tags": add_tags,
+            "add_tags": add_tags or [],
             "regex_match": regex_match,
             "add_type": add_type,
             "fetch_neighbors": fetch_neighbors,
