@@ -306,6 +306,50 @@ class YetiApi:
             raise
         return json.loads(response)
 
+    def match_observables(
+        self,
+        observables: list[str],
+        add_tags: list[str] | None = None,
+        regex_match: bool = False,
+        add_type: str | None = None,
+        fetch_neighbors: bool = True,
+        add_unknown: bool = False,
+    ):
+        """Matches a list of observables against the Yeti data graph.
+
+        This is a more complex method than `search_observables`, as it will
+        obtain information on entities related to the observables, matching
+        indicators, and bloom filter hits.
+
+        Args:
+          observables: The list of observable values to match.
+          add_tags: Optional. The tags to add to the matched observables.
+          regex_match: Whether to use regex matching (default is False).
+          add_type: Optional. The type to add to the matched observables.
+          fetch_neighbors: Whether to fetch neighbors of the matched observables
+            (default is True).
+          add_unknown: Whether to add unknown observables (default is False).
+
+        Returns:
+            The response from the API; a dict with 'entities' (entities related
+            to the observables), 'obseravbles' (with the relationship to their
+            entities), 'known' (list of known observables), 'matches' (for
+            observables that matched an indicator), and 'unknown' (set of
+            unknown observables).
+        """
+        params = {
+            "observables": observables,
+            "add_tags": add_tags,
+            "regex_match": regex_match,
+            "add_type": add_type,
+            "fetch_neighbors": fetch_neighbors,
+            "add_unknown": add_unknown,
+        }
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/graph/match", json_data=params
+        )
+        return json.loads(response)["observables"]
+
     def search_observables(
         self,
         value: str,
