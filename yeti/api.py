@@ -311,7 +311,7 @@ class YetiApi:
         observables: list[str],
         add_tags: list[str] | None = None,
         regex_match: bool = False,
-        add_type: str | None = None,
+        add_type: str = "guess",
         fetch_neighbors: bool = True,
         add_unknown: bool = False,
     ):
@@ -326,6 +326,8 @@ class YetiApi:
           add_tags: Optional. The tags to add to the matched observables.
           regex_match: Whether to use regex matching (default is False).
           add_type: Optional. The type to add to the matched observables.
+            Default is "guess", which will try to guess the type based on the
+            observable value.
           fetch_neighbors: Whether to fetch neighbors of the matched observables
             (default is True).
           add_unknown: Whether to add unknown observables (default is False).
@@ -348,7 +350,7 @@ class YetiApi:
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/graph/match", json_data=params
         )
-        return json.loads(response)["observables"]
+        return json.loads(response)
 
     def search_observables(
         self,
