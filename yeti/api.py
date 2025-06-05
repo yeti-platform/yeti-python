@@ -576,18 +576,19 @@ class YetiApi:
             "name": name,
         }
 
-        if dfiq_type:
-            query["type"] = dfiq_type
         if dfiq_yaml:
             query["dfiq_yaml"] = dfiq_yaml
         if dfiq_tags:
             query["dfiq_tags"] = dfiq_tags
+
         params = {
             "query": query,
             "count": count,
             "page": page,
             "filter_aliases": [["dfiq_tags", "list"], ["dfiq_id", "text"]],
         }
+        if dfiq_type:
+            params["type"] = dfiq_type
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/dfiq/search", json_data=params
         )
