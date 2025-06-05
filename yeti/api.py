@@ -21,6 +21,38 @@ OIDC_CALLBACK_ENDPOINT = "/api/v2/auth/oidc-callback-token"
 API_TOKEN_ENDPOINT = "/api/v2/auth/api-token"
 
 
+SUPPORTED_IOC_TYPES = [
+    "generic",
+    "ipv6",
+    "ipv4",
+    "hostname",
+    "url",
+    "file",
+    "sha256",
+    "md5",
+    "sha1",
+    "asn",
+    "wallet",
+    "certificate",
+    "cidr",
+    "mac_address",
+    "command_line",
+    "registry_key",
+    "imphash",
+    "tlsh",
+    "ssdeep",
+    "email",
+    "path",
+    "container_image",
+    "docker_image",
+    "user_agent",
+    "user_account",
+    "iban",
+    "bic",
+    "auth_secret",
+]
+
+
 # typedef for a Yeti Objects
 YetiObject = dict[str, Any]
 YetiLinkObject = dict[str, Any]
@@ -670,7 +702,7 @@ class YetiApi:
 
         Args:
           observables: The list of observables to add. Dictionaries should have a
-            'value' (str) and a 'type' (str) key. See TACO_TYPE_MAPPING for a list
+            'value' (str) and a 'type' (str) key. See SUPPORTED_IOC_TYPES for a list
             of supported types.
           tags: The tags to associate with all observables.
 
