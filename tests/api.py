@@ -152,9 +152,9 @@ class TestYetiApi(unittest.TestCase):
                     "name": "test_dfiq",
                     "dfiq_yaml": "yaml_content",
                     "dfiq_tags": ["tag1"],
-                    "filter_aliases": [["dfiq_tags", "list"], ["dfiq_id", "text"]],
                 },
                 "count": 100,
+                "filter_aliases": [["dfiq_tags", "list"], ["dfiq_id", "text"]],
                 "page": 0,
             },
         )
