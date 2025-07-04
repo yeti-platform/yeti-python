@@ -135,7 +135,7 @@ class YetiEndToEndTest(unittest.TestCase):
         self.assertEqual(tags[0]["name"], "testSearchTag")
         self.assertEqual(tags[0]["description"], "testDesc")
 
-        tags = self.api.search_tags(name="desc")
+        tags = self.api.search_tags("", description="Desc")
         self.assertEqual(len(tags), 1)
         self.assertEqual(tags[0]["name"], "testSearchTag")
         self.assertEqual(tags[0]["description"], "testDesc")
