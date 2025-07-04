@@ -739,6 +739,43 @@ class YetiApi:
         )
         return json.loads(response)
 
+    def new_tag(self, name: str, description: str | None = None) -> dict[str, Any]:
+        """Creates a new tag in Yeti.
+
+        Args:
+            name: The name of the tag to create.
+            description: An optional description for the tag.
+
+        Returns:
+            The response from the API; a dict representing the tag.
+        """
+        params = {"name": name}
+        if description:
+            params["description"] = description
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/tags/", json_data=params
+        )
+        return json.loads(response)
+
+    def search_tags(self, name: str, count: int = 100, page: int = 0):
+        """Searches for tags in Yeti.
+
+        Returns tag information based on a substring match of the tag name.
+
+        Args:
+            name: The name of the tag to search for (substring match).
+            count: The number of results to return (default is 100).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            The response from the API; a list of dicts representing tags.
+        """
+        params = {"name": name, "count": count, "page": page}
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/tags/search", json_data=params
+        )
+        return json.loads(response)["tags"]
+
     def link_objects(
         self,
         source: YetiObject,
