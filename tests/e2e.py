@@ -121,15 +121,21 @@ class YetiEndToEndTest(unittest.TestCase):
 
     def test_new_tag(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
-        tag = self.api.new_tag({"name": "testTag", "description": "test"})
+        tag = self.api.new_tag("testTag", description="test")
         self.assertEqual(tag["name"], "testTag")
         self.assertEqual(tag["description"], "test")
 
     def test_search_tags(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
-        self.api.new_tag({"name": "testSearchTag", "description": "test"})
+        self.api.new_tag("testSearchTag", description="testDesc")
         time.sleep(5)
-        tags = self.api.search_tags(name="test")
+
+        tags = self.api.search_tags(name="testSearch")
         self.assertEqual(len(tags), 1)
         self.assertEqual(tags[0]["name"], "testSearchTag")
-        self.assertEqual(tags[0]["description"], "test")
+        self.assertEqual(tags[0]["description"], "testDesc")
+
+        tags = self.api.search_tags(name="desc")
+        self.assertEqual(len(tags), 1)
+        self.assertEqual(tags[0]["name"], "testSearchTag")
+        self.assertEqual(tags[0]["description"], "testDesc")
