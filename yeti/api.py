@@ -757,16 +757,13 @@ class YetiApi:
         )
         return json.loads(response)
 
-    def search_tags(
-        self, name: str, description: str = "", count: int = 100, page: int = 0
-    ):
+    def search_tags(self, name: str, count: int = 100, page: int = 0):
         """Searches for tags in Yeti.
 
         Returns tag information based on a substring match of the tag name.
 
         Args:
             name: The name of the tag to search for (substring match).
-            description: An optional description to filter tags by (substring match).
             count: The number of results to return (default is 100).
             page: The page of results to return (default is 0, which means the first page).
 
@@ -774,8 +771,6 @@ class YetiApi:
             The response from the API; a list of dicts representing tags.
         """
         params = {"name": name, "count": count, "page": page}
-        if description:
-            params["description"] = description
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/tags/search", json_data=params
         )
