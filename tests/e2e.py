@@ -1,9 +1,6 @@
 import os
 import time
 import unittest
-from unittest.mock import MagicMock, patch
-
-import requests
 
 from yeti import errors
 from yeti.api import YetiApi
@@ -85,7 +82,7 @@ class YetiEndToEndTest(unittest.TestCase):
         self.assertEqual(indicator["name"], "testGet")
         self.assertEqual(indicator["pattern"], "test[0-9]")
         self.assertEqual(indicator["tags"][0]["name"], "testtag")
-        
+
     def test_link_objects(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
         indicator = self.api.new_indicator(
@@ -121,3 +118,19 @@ class YetiEndToEndTest(unittest.TestCase):
         self.assertEqual(
             neighbors["vertices"][f'entities/{malware["id"]}']["name"], "testMalware"
         )
+
+    def test_new_tag(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        tag = self.api.new_tag("testTag", description="test")
+        self.assertEqual(tag["name"], "testTag")
+        self.assertEqual(tag["description"], "test")
+
+    def test_search_tags(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        self.api.new_tag("testSearchTag", description="testDesc")
+        time.sleep(5)
+
+        tags = self.api.search_tags(name="testSearch")
+        self.assertEqual(len(tags), 1)
+        self.assertEqual(tags[0]["name"], "testSearchTag")
+        self.assertEqual(tags[0]["description"], "testDesc")

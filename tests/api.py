@@ -279,6 +279,38 @@ class TestYetiApi(unittest.TestCase):
         )
 
     @patch("yeti.api.requests.Session.post")
+    def test_new_tag(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"name": "testtag"}'
+        mock_post.return_value = mock_response
+
+        result = self.api.new_tag("testtag")
+        self.assertEqual(result, {"name": "testtag"})
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/tags/",
+            json={"name": "testtag"},
+        )
+
+        result = self.api.new_tag("wdesc", description="desc")
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/tags/",
+            json={"name": "wdesc", "description": "desc"},
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_search_tags(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"tags": [{"name": "tag1"}]}'
+        mock_post.return_value = mock_response
+
+        result = self.api.search_tags("tag1")
+        self.assertEqual(result, [{"name": "tag1"}])
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/tags/search",
+            json={"name": "tag1", "count": 100, "page": 0},
+        )
+
+    @patch("yeti.api.requests.Session.post")
     def test_link_objects(self, mock_post):
         mock_response = MagicMock()
         mock_response.content = b'{"id": "link"}'
