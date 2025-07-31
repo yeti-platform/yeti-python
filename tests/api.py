@@ -47,6 +47,19 @@ class TestYetiApi(unittest.TestCase):
         )
 
     @patch("yeti.api.requests.Session.post")
+    def test_get_multiple_indicators(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"indicators": [{"name": "test"}]}'
+        mock_post.return_value = mock_response
+
+        result = self.api.get_multiple_indicators(["test"])
+        self.assertEqual(result, [{"name": "test"}])
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/indicators/get/multiple",
+            json={"names": ["test"], "count": 100, "page": 0},
+        )
+
+    @patch("yeti.api.requests.Session.post")
     def test_search_entities(self, mock_post):
         mock_response = MagicMock()
         mock_response.content = b'{"entities": [{"name": "test_entity"}]}'
@@ -63,6 +76,19 @@ class TestYetiApi(unittest.TestCase):
                 "count": 100,
                 "page": 0,
             },
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_get_multiple_entities(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"entities": [{"name": "test_entity"}]}'
+        mock_post.return_value = mock_response
+
+        result = self.api.get_multiple_entities(["test_entity"])
+        self.assertEqual(result, [{"name": "test_entity"}])
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/entities/get/multiple",
+            json={"names": ["test_entity"], "count": 100, "page": 0},
         )
 
     @patch("yeti.api.requests.Session.post")
@@ -157,6 +183,19 @@ class TestYetiApi(unittest.TestCase):
                 "filter_aliases": [["dfiq_tags", "list"], ["dfiq_id", "text"]],
                 "page": 0,
             },
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_get_multiple_dfiq(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"dfiq": [{"name": "test_dfiq"}]}'
+        mock_post.return_value = mock_response
+
+        result = self.api.get_multiple_dfiq(["test_dfiq"])
+        self.assertEqual(result, [{"name": "test_dfiq"}])
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/dfiq/get/multiple",
+            json={"names": ["test_dfiq"], "count": 100, "page": 0},
         )
 
     @patch("yeti.api.requests.Session.post")
