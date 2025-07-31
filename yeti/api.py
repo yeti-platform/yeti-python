@@ -776,6 +776,25 @@ class YetiApi:
         )
         return json.loads(response)["tags"]
 
+    def get_multiple_tags(
+        self, names: list[str], count: int = 100, page: int = 0
+    ) -> list[dict[str, Any]]:
+        """Gets a list of tags by name.
+
+        Args:
+            names: The list of tag names to retrieve.
+            count: The number of results to return (default is 100).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            A list of dicts representing the tags.
+        """
+        params = {"names": names, "count": count, "page": page}
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/tags/get/multiple", json_data=params
+        )
+        return json.loads(response)["tags"]
+
     def link_objects(
         self,
         source: YetiObject,
