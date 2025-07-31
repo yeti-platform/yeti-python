@@ -253,6 +253,25 @@ class YetiApi:
         )
         return json.loads(response)["indicators"]
 
+    def get_multiple_indicators(
+        self, names: list[str], count: int = 100, page: int = 0
+    ) -> list[YetiObject]:
+        """Gets a list of indicators by name.
+
+        Args:
+            names: The list of indicator names to retrieve.
+            count: The number of results to return (default is 100).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            A list of dicts representing the indicators.
+        """
+        params = {"names": names, "count": count, "page": page}
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/indicators/get/multiple", json_data=params
+        )
+        return json.loads(response)["indicators"]
+
     def find_entity(self, name: str, type: str) -> YetiObject | None:
         """Finds an entity in Yeti by name.
 
@@ -313,6 +332,25 @@ class YetiApi:
             "POST",
             f"{self._url_root}/api/v2/entities/search",
             json_data=params,
+        )
+        return json.loads(response)["entities"]
+
+    def get_multiple_entities(
+        self, names: list[str], count: int = 100, page: int = 0
+    ) -> list[YetiObject]:
+        """Gets a list of entities by name.
+
+        Args:
+            names: The list of entity names to retrieve.
+            count: The number of results to return (default is 100).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            A list of dicts representing the entities.
+        """
+        params = {"names": names, "count": count, "page": page}
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/entities/get/multiple", json_data=params
         )
         return json.loads(response)["entities"]
 
@@ -591,6 +629,25 @@ class YetiApi:
             params["type"] = dfiq_type
         response = self.do_request(
             "POST", f"{self._url_root}/api/v2/dfiq/search", json_data=params
+        )
+        return json.loads(response)["dfiq"]
+
+    def get_multiple_dfiq(
+        self, names: list[str], count: int = 100, page: int = 0
+    ) -> list[YetiObject]:
+        """Gets a list of DFIQ objects by name.
+
+        Args:
+            names: The list of DFIQ names to retrieve.
+            count: The number of results to return (default is 100).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            A list of dicts representing the DFIQ objects.
+        """
+        params = {"names": names, "count": count, "page": page}
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/dfiq/get/multiple", json_data=params
         )
         return json.loads(response)["dfiq"]
 

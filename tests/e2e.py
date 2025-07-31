@@ -44,6 +44,46 @@ class YetiEndToEndTest(unittest.TestCase):
 
         self.api.search_indicators(name="test")
 
+    def test_search_entities(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        self.api.new_entity(
+            {
+                "name": "testSearch",
+                "type": "malware",
+                "description": "test",
+            },
+            tags=["testtag"],
+        )
+        time.sleep(5)
+        result = self.api.search_entities(name="testSear", description="tes")
+        self.assertEqual(len(result), 1, result)
+        self.assertEqual(result[0]["name"], "testSearch")
+        self.assertEqual(result[0]["tags"][0]["name"], "testtag")
+
+    def test_get_multiple_entities(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        self.api.new_entity(
+            {
+                "name": "testGet1",
+                "type": "malware",
+                "description": "test",
+            },
+            tags=["testtag1"],
+        )
+        self.api.new_entity(
+            {
+                "name": "testGet2",
+                "type": "malware",
+                "description": "test",
+            },
+            tags=["testtag2"],
+        )
+        time.sleep(5)
+        entities = self.api.get_multiple_entities(["testGet1", "testGet2"])
+        self.assertEqual(len(entities), 2)
+        names = [entity["name"] for entity in entities]
+        self.assertCountEqual(names, ["testGet1", "testGet2"])
+
     def test_search_indicators(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
         self.api.new_indicator(
@@ -82,6 +122,34 @@ class YetiEndToEndTest(unittest.TestCase):
         self.assertEqual(indicator["name"], "testGet")
         self.assertEqual(indicator["pattern"], "test[0-9]")
         self.assertEqual(indicator["tags"][0]["name"], "testtag")
+
+    def test_get_multiple_indicators(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        self.api.new_indicator(
+            {
+                "name": "testGet1",
+                "type": "regex",
+                "description": "test",
+                "pattern": "test[0-9]",
+                "diamond": "victim",
+            },
+            tags=["testtag1"],
+        )
+        self.api.new_indicator(
+            {
+                "name": "testGet2",
+                "type": "regex",
+                "description": "test",
+                "pattern": "test[0-9]",
+                "diamond": "victim",
+            },
+            tags=["testtag2"],
+        )
+        time.sleep(5)
+        indicators = self.api.get_multiple_indicators(["testGet1", "testGet2"])
+        self.assertEqual(len(indicators), 2)
+        names = [indicator["name"] for indicator in indicators]
+        self.assertCountEqual(names, ["testGet1", "testGet2"])
 
     def test_link_objects(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
