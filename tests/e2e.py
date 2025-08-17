@@ -60,6 +60,23 @@ class YetiEndToEndTest(unittest.TestCase):
         self.assertEqual(result[0]["name"], "testSearch")
         self.assertEqual(result[0]["tags"][0]["name"], "testtag")
 
+    def test_search_entities_with_tags(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        self.api.new_entity(
+            {
+                "name": "testSearchWithTags",
+                "type": "malware",
+                "description": "test",
+            },
+            tags=["testtag1", "testtag2"],
+        )
+        time.sleep(5)
+        result = self.api.search_entities(
+            name="testSear", description="tes", tags=["testtag1"]
+        )
+        self.assertEqual(len(result), 1, result)
+        self.assertEqual(result[0]["name"], "testSearchWithTags")
+
     def test_get_multiple_entities(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
         self.api.new_entity(

@@ -224,6 +224,8 @@ class YetiApi:
           pattern: The pattern of the indicator to search for.
           description: The description of the indicator to search for. (substring match)
           tags: The tags of the indicator to search for.
+          count: The number of results to return (default is 100, which means all).
+          page: The page of results to return (default is 0, which means the first page).
 
         Returns:
           The response from the API; a list of dicts representing indicators.
@@ -299,6 +301,7 @@ class YetiApi:
         name: str | None = None,
         entity_type: str | None = None,
         description: str | None = None,
+        tags: list[str] | None = None,
         count: int = 100,
         page: int = 0,
     ) -> list[YetiObject]:
@@ -310,6 +313,7 @@ class YetiApi:
             name: The name of the entity to search for (substring match).
             entity_type: The type of the entity to search for.
             description: The description of the entity to search for. (substring match)
+            tags: The tags of the entity to search for.
             count: The number of results to return (default is 100, which means all).
             page: The page of results to return (default is 0, which means the first page).
 
@@ -326,6 +330,8 @@ class YetiApi:
             query["type"] = entity_type
         if description:
             query["description"] = description
+        if tags:
+            query["tags"] = tags
 
         params = {"query": query, "count": count, "page": page}
         response = self.do_request(
