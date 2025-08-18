@@ -66,13 +66,17 @@ class TestYetiApi(unittest.TestCase):
         mock_post.return_value = mock_response
 
         result = self.api.search_entities(
-            name="test_entity", description="test_description"
+            name="test_entity", description="test_description", tags=["tag1"]
         )
         self.assertEqual(result, [{"name": "test_entity"}])
         mock_post.assert_called_with(
             "http://fake-url/api/v2/entities/search",
             json={
-                "query": {"name": "test_entity", "description": "test_description"},
+                "query": {
+                    "name": "test_entity",
+                    "description": "test_description",
+                    "tags": ["tag1"],
+                },
                 "count": 100,
                 "page": 0,
             },
