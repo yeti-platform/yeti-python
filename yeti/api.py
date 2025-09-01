@@ -74,8 +74,11 @@ class YetiApi:
       _url_root: The root URL of the Yeti API.
     """
 
-    def __init__(self, url_root: str):
+    def __init__(self, url_root: str, tls_cert: str | None = None):
         self.client = requests.Session()
+        self._tls_cert = tls_cert
+        if tls_cert:
+            self.client.verify = self._tls_cert
         self._headers = {
             "Content-Type": "application/json",
         }
@@ -171,6 +174,8 @@ class YetiApi:
                 f"Failed to find access token in the response: {response}"
             )
         authd_session = requests.Session()
+        if self._tls_cert:
+            authd_session.verify = self._tls_cert
         authd_session.headers.update({"authorization": f"Bearer {access_token}"})
         self.client = authd_session
 
