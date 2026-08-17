@@ -458,6 +458,36 @@ class YetiApi:
         )
         return json.loads(response)["observables"]
 
+    def semantic_search(
+        self,
+        query: str,
+        count: int = 10,
+        root_type: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Searches Yeti for entities, indicators, or DFIQ objects related to
+        a query by meaning rather than exact text match.
+
+        Args:
+          query: A natural-language description of what to search for.
+          count: The maximum number of results to return per type (default is 10).
+          root_type: Optional. Restrict the search to a single object type:
+            "entity", "indicator", or "dfiq". Leave unset to search all types.
+
+        Returns:
+          The response from the API; a list of dicts, one per searched type,
+          each with a 'type' key, a 'results' key (a list of dicts representing
+          matched objects, each including a 'semantic_score' field where higher
+          is more similar), and a 'total' key (the number of results returned
+          for that type).
+        """
+        params: dict[str, Any] = {"query": query, "count": count}
+        if root_type:
+            params["root_type"] = root_type
+        response = self.do_request(
+            "POST", f"{self._url_root}/api/v2/search/semantic", json_data=params
+        )
+        return json.loads(response)["sections"]
+
     def search_bloom(self, values: list[str]) -> list[dict[str, Any]]:
         """Searches for a list of observable values in Yeti's bloom filters.
 
