@@ -113,6 +113,37 @@ class TestYetiApi(unittest.TestCase):
         )
 
     @patch("yeti.api.requests.Session.post")
+    def test_semantic_search(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = (
+            b'{"sections": [{"type": "entity", "results": '
+            b'[{"name": "test_entity", "semantic_score": 0.5}], "total": 1}]}'
+        )
+        mock_post.return_value = mock_response
+
+        result = self.api.semantic_search("test_query")
+        self.assertEqual(
+            result,
+            [
+                {
+                    "type": "entity",
+                    "results": [{"name": "test_entity", "semantic_score": 0.5}],
+                    "total": 1,
+                }
+            ],
+        )
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/search/semantic",
+            json={"query": "test_query", "count": 10},
+        )
+
+        result = self.api.semantic_search("test_query", count=3, root_type="dfiq")
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/search/semantic",
+            json={"query": "test_query", "count": 3, "root_type": "dfiq"},
+        )
+
+    @patch("yeti.api.requests.Session.post")
     def test_search_bloom(self, mock_post):
         mock_response = MagicMock()
         mock_response.content = b'[{"value": "test.com", "hits": ["filter1"]}]'
