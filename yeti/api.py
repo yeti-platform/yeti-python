@@ -475,10 +475,19 @@ class YetiApi:
 
         Returns:
           The response from the API; a list of dicts, one per searched type,
-          each with a 'type' key, a 'results' key (a list of dicts representing
-          matched objects, each including a 'semantic_score' field where higher
-          is more similar), and a 'total' key (the number of results returned
-          for that type).
+          each with a 'type' key, a 'results' key, and a 'total' key (the
+          number of results returned for that type).
+
+          Each result is a matched object with two search fields added:
+          'semantic_score', a similarity between 0 and 1 where 1 is
+          near-identical and 0 unrelated, and 'matched_on', naming which of
+          the object's indexed documents matched -- 'self' for the object's
+          own name and description, or 'approach:N' for the Nth approach of a
+          DFIQ question.
+
+          The API applies no relevance cut-off, since a useful threshold
+          depends on the corpus and the query. Filter on 'semantic_score' if
+          you need one.
         """
         params: dict[str, Any] = {"query": query, "count": count}
         if root_type:
