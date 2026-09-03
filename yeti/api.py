@@ -120,7 +120,7 @@ class YetiApi:
         if json_data and body:
             raise ValueError("You must provide either json or body, not both.")
 
-        request_kwargs = {}
+        request_kwargs: dict[str, Any] = {}
 
         if headers:
             request_kwargs["headers"] = headers
@@ -241,7 +241,7 @@ class YetiApi:
                 "You must provide one of name, indicator_type, pattern, description, or tags."
             )
 
-        query = {}
+        query: dict[str, Any] = {}
         if name:
             query["name"] = name
         if pattern:
@@ -328,7 +328,7 @@ class YetiApi:
         if not any([name, entity_type, description]):
             raise ValueError("You must provide one of name, type, or description.")
 
-        query = {}
+        query: dict[str, Any] = {}
         if name:
             query["name"] = name
         if entity_type:
@@ -448,7 +448,7 @@ class YetiApi:
         Returns:
           The response from the API; a dict representing the observable.
         """
-        query = {"value": value}
+        query: dict[str, Any] = {"value": value}
         if tags:
             query["tags"] = tags
         params = {"query": query, "count": count, "page": page}
@@ -526,7 +526,7 @@ class YetiApi:
         Returns:
           The response from the API; a dict representing the entity.
         """
-        params = {"entity": entity}
+        params: dict[str, Any] = {"entity": entity}
         if tags:
             params["tags"] = tags
         response = self.do_request(
@@ -660,7 +660,7 @@ class YetiApi:
         Returns:
             The response from the API; a dict representing the DFIQ object.
         """
-        query = {
+        query: dict[str, Any] = {
             "name": name,
         }
 
@@ -669,7 +669,7 @@ class YetiApi:
         if dfiq_tags:
             query["dfiq_tags"] = dfiq_tags
 
-        params = {
+        params: dict[str, Any] = {
             "query": query,
             "count": count,
             "page": page,
@@ -751,7 +751,7 @@ class YetiApi:
         Returns:
           The archive contents as bytes.
         """
-        params = {"count": 0}
+        params: dict[str, Any] = {"count": 0}
         if dfiq_type:
             params["query"] = {"type": dfiq_type}
         response = self.do_request(
