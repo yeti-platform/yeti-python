@@ -78,7 +78,7 @@ class YetiApi:
         self.client = requests.Session()
         self._tls_cert = tls_cert
         if tls_cert:
-            self.client.verify = self._tls_cert
+            self.client.verify = self._tls_cert  # type: ignore
         self._headers = {
             "Content-Type": "application/json",
         }
@@ -175,7 +175,7 @@ class YetiApi:
             )
         authd_session = requests.Session()
         if self._tls_cert:
-            authd_session.verify = self._tls_cert
+            authd_session.verify = self._tls_cert  # type: ignore
         authd_session.headers.update({"authorization": f"Bearer {access_token}"})
         self.client = authd_session
 
