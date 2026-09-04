@@ -558,6 +558,80 @@ class TestYetiApi(unittest.TestCase):
         result = self.api.find_dfiq(name="not_found", dfiq_type="scenario")
         self.assertIsNone(result)
 
+    @patch("yeti.api.requests.Session.post")
+    def test_search_agent_personas(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"personas": [{"name": "Default"}], "total": 1}'
+        mock_post.return_value = mock_response
+
+        result = self.api.search_agent_personas()
+        self.assertEqual(result, [{"name": "Default"}])
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/agentpersonas/search",
+            json={"name": "", "count": 50, "page": 0},
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_search_agent_personas_filtered(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"personas": [], "total": 0}'
+        mock_post.return_value = mock_response
+
+        self.api.search_agent_personas(name="SOC", enabled=True, count=10, page=2)
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/agentpersonas/search",
+            json={"name": "SOC", "count": 10, "page": 2, "enabled": True},
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_search_agent_personas_enabled_false_is_sent(self, mock_post):
+        """False must reach the API; only None means "either"."""
+        mock_response = MagicMock()
+        mock_response.content = b'{"personas": [], "total": 0}'
+        mock_post.return_value = mock_response
+
+        self.api.search_agent_personas(enabled=False)
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/agentpersonas/search",
+            json={"name": "", "count": 50, "page": 0, "enabled": False},
+        )
+
+    @patch("yeti.api.requests.Session.get")
+    def test_get_agent_persona(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "1", "name": "Default"}'
+        mock_get.return_value = mock_response
+
+        result = self.api.get_agent_persona("1")
+        self.assertEqual(result, {"id": "1", "name": "Default"})
+        mock_get.assert_called_with("http://fake-url/api/v2/agentpersonas/1")
+
+    @patch("yeti.api.requests.Session.post")
+    def test_new_agent_persona(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "new_persona"}'
+        mock_post.return_value = mock_response
+
+        result = self.api.new_agent_persona({"name": "Default"})
+        self.assertEqual(result, {"id": "new_persona"})
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/agentpersonas/",
+            json={"persona": {"name": "Default"}},
+        )
+
+    @patch("yeti.api.requests.Session.patch")
+    def test_patch_agent_persona(self, mock_patch):
+        mock_response = MagicMock()
+        mock_response.content = b'{"id": "patched_persona"}'
+        mock_patch.return_value = mock_response
+
+        result = self.api.patch_agent_persona("1", {"name": "Renamed"})
+        self.assertEqual(result, {"id": "patched_persona"})
+        mock_patch.assert_called_with(
+            "http://fake-url/api/v2/agentpersonas/1",
+            json={"persona": {"name": "Renamed"}},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

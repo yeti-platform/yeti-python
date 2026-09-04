@@ -982,3 +982,85 @@ class YetiApi:
             "POST", f"{self._url_root}/api/v2/graph/search", json_data=params
         )
         return json.loads(response)
+
+    def search_agent_personas(
+        self,
+        name: str | None = None,
+        enabled: bool | None = None,
+        count: int = 50,
+        page: int = 0,
+    ) -> list[YetiObject]:
+        """Searches for agent personas in Yeti.
+
+        Unlike the other search methods, every argument is optional: listing all
+        personas is the common case.
+
+        Args:
+            name: The name of the persona to search for (substring match).
+            enabled: Restricts to enabled or disabled personas. None means both.
+            count: The number of results to return (default is 50).
+            page: The page of results to return (default is 0, which means the first page).
+
+        Returns:
+            The response from the API; a list of dicts representing personas.
+        """
+        params: dict[str, Any] = {"name": name or "", "count": count, "page": page}
+        if enabled is not None:
+            params["enabled"] = enabled
+
+        response = self.do_request(
+            "POST",
+            f"{self._url_root}/api/v2/agentpersonas/search",
+            json_data=params,
+        )
+        return json.loads(response)["personas"]
+
+    def get_agent_persona(self, yeti_id: str) -> YetiObject:
+        """Fetches a single agent persona by its Yeti ID.
+
+        Args:
+            yeti_id: The ID of the persona, as provided by Yeti.
+
+        Returns:
+            The response from the API; a dict representing the persona.
+        """
+        response = self.do_request(
+            "GET", f"{self._url_root}/api/v2/agentpersonas/{yeti_id}"
+        )
+        return json.loads(response)
+
+    def new_agent_persona(self, persona: dict[str, Any]) -> YetiObject:
+        """Creates a new agent persona in Yeti.
+
+        Args:
+            persona: The persona to create. Requires at least `name` and
+              `instruction`; Yeti rejects instructions shorter than 20 characters.
+
+        Returns:
+            The response from the API; a dict representing the persona.
+        """
+        params = {"persona": persona}
+        response = self.do_request(
+            "POST",
+            f"{self._url_root}/api/v2/agentpersonas/",
+            json_data=params,
+        )
+        return json.loads(response)
+
+    def patch_agent_persona(self, yeti_id: str, persona: dict[str, Any]) -> YetiObject:
+        """Updates an existing agent persona in Yeti.
+
+        Args:
+            yeti_id: The ID of the persona to update, as provided by Yeti.
+            persona: The full persona object to write.
+
+        Returns:
+            The response from the API; a dict representing the persona.
+        """
+        params = {"persona": persona}
+        response = self.do_request(
+            "PATCH",
+            f"{self._url_root}/api/v2/agentpersonas/{yeti_id}",
+            json_data=params,
+        )
+        return json.loads(response)
