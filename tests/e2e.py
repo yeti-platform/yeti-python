@@ -1,6 +1,7 @@
 import os
 import time
 import unittest
+import uuid
 
 from yeti import errors
 from yeti.api import YetiApi
@@ -203,6 +204,38 @@ class YetiEndToEndTest(unittest.TestCase):
         self.assertEqual(
             neighbors["vertices"][f'entities/{malware["id"]}']["name"], "testMalware"
         )
+
+    def test_dfiq_from_yaml_and_patch(self):
+        """Covers the three DFIQ write methods, whose payloads the API
+        validates with extra="forbid": an unexpected field is a 422."""
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        scenario_uuid = str(uuid.uuid4())
+        scenario_yaml = f"""---
+name: testScenario
+type: scenario
+description: >
+  test
+id: S1990
+uuid: {scenario_uuid}
+dfiq_version: 1.1.0
+"""
+
+        with self.assertWarns(DeprecationWarning):
+            scenario = self.api.new_dfiq_from_yaml("scenario", scenario_yaml)
+        self.assertEqual(scenario["name"], "testScenario")
+        self.assertEqual(scenario["uuid"], scenario_uuid)
+
+        with self.assertWarns(DeprecationWarning):
+            patched = self.api.patch_dfiq_from_yaml(
+                "scenario",
+                scenario_yaml.replace("  test", "  patched from yaml"),
+                scenario["id"],
+            )
+        self.assertEqual(patched["description"].strip(), "patched from yaml")
+
+        patched["description"] = "patched as an object"
+        patched = self.api.patch_dfiq(patched)
+        self.assertEqual(patched["description"], "patched as an object")
 
     def test_new_tag(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))

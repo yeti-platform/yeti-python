@@ -239,12 +239,12 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"id": "new_dfiq"}'
         mock_post.return_value = mock_response
 
-        result = self.api.new_dfiq_from_yaml("type", "yaml_content")
+        with self.assertWarns(DeprecationWarning):
+            result = self.api.new_dfiq_from_yaml("type", "yaml_content")
         self.assertEqual(result, {"id": "new_dfiq"})
         mock_post.assert_called_with(
             "http://fake-url/api/v2/dfiq/from_yaml",
             json={
-                "dfiq_type": "type",
                 "dfiq_yaml": "yaml_content",
             },
         )
@@ -255,12 +255,12 @@ class TestYetiApi(unittest.TestCase):
         mock_response.content = b'{"id": "patched_dfiq"}'
         mock_patch.return_value = mock_response
 
-        result = self.api.patch_dfiq_from_yaml("type", "yaml_content", 1)
+        with self.assertWarns(DeprecationWarning):
+            result = self.api.patch_dfiq_from_yaml("type", "yaml_content", 1)
         self.assertEqual(result, {"id": "patched_dfiq"})
         mock_patch.assert_called_with(
             "http://fake-url/api/v2/dfiq/1",
             json={
-                "dfiq_type": "type",
                 "dfiq_yaml": "yaml_content",
             },
         )
@@ -279,7 +279,6 @@ class TestYetiApi(unittest.TestCase):
             "http://fake-url/api/v2/dfiq/1",
             json={
                 "dfiq_object": {"name": "patched_dfiq", "type": "question", "id": 1},
-                "dfiq_type": "question",
             },
         )
 
