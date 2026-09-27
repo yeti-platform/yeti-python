@@ -3,6 +3,7 @@
 import json
 import logging
 import urllib.parse
+import warnings
 from typing import Any, Sequence
 
 import requests
@@ -19,6 +20,11 @@ TYPE_TO_ENDPOINT = {
 
 OIDC_CALLBACK_ENDPOINT = "/api/v2/auth/oidc-callback-token"
 API_TOKEN_ENDPOINT = "/api/v2/auth/api-token"
+
+DFIQ_TYPE_DEPRECATION = (
+    "dfiq_type is ignored: Yeti infers the DFIQ type from the payload. The "
+    "parameter will be removed in the next major version."
+)
 
 
 SUPPORTED_IOC_TYPES = [
@@ -702,9 +708,14 @@ class YetiApi:
         return json.loads(response)["dfiq"]
 
     def new_dfiq_from_yaml(self, dfiq_type: str, dfiq_yaml: str) -> YetiObject:
-        """Creates a new DFIQ object in Yeti from a YAML string."""
+        """Creates a new DFIQ object in Yeti from a YAML string.
+
+        Args:
+          dfiq_type: Ignored. Yeti reads the type from the YAML.
+          dfiq_yaml: The DFIQ object, as YAML.
+        """
+        warnings.warn(DFIQ_TYPE_DEPRECATION, DeprecationWarning, stacklevel=2)
         params = {
-            "dfiq_type": dfiq_type,
             "dfiq_yaml": dfiq_yaml,
         }
         response = self.do_request(
@@ -718,9 +729,15 @@ class YetiApi:
         dfiq_yaml: str,
         yeti_id: int,
     ) -> YetiObject:
-        """Patches a DFIQ object in Yeti from a YAML string."""
+        """Patches a DFIQ object in Yeti from a YAML string.
+
+        Args:
+          dfiq_type: Ignored. Yeti reads the type from the YAML.
+          dfiq_yaml: The DFIQ object, as YAML.
+          yeti_id: The ID of the DFIQ object to patch.
+        """
+        warnings.warn(DFIQ_TYPE_DEPRECATION, DeprecationWarning, stacklevel=2)
         params = {
-            "dfiq_type": dfiq_type,
             "dfiq_yaml": dfiq_yaml,
         }
         response = self.do_request(
@@ -731,7 +748,6 @@ class YetiApi:
     def patch_dfiq(self, dfiq_object: dict[str, Any]) -> YetiObject:
         """Patches a DFIQ object in Yeti."""
         params = {
-            "dfiq_type": dfiq_object["type"],
             "dfiq_object": dfiq_object,
         }
         response = self.do_request(
