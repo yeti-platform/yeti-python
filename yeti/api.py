@@ -144,6 +144,8 @@ class YetiApi:
                 response = self.client.patch(url, **request_kwargs)
             elif method == "GET":
                 response = self.client.get(url, **request_kwargs)
+            elif method == "DELETE":
+                response = self.client.delete(url, **request_kwargs)
             else:
                 raise ValueError(f"Unsupported method: {method}")
             response.raise_for_status()
