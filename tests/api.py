@@ -631,6 +631,21 @@ class TestYetiApi(unittest.TestCase):
             json={"persona": {"name": "Renamed"}},
         )
 
+    @patch("yeti.api.requests.Session.delete")
+    def test_do_request_delete(self, mock_delete):
+        mock_response = MagicMock()
+        mock_response.content = b""
+        mock_delete.return_value = mock_response
+
+        result = self.api.do_request("DELETE", "http://fake-url/api/v2/dfiq/1")
+        self.assertEqual(result, b"")
+        mock_delete.assert_called_with("http://fake-url/api/v2/dfiq/1")
+
+    def test_do_request_rejects_unknown_methods(self):
+        with self.assertRaises(ValueError) as error:
+            self.api.do_request("TRACE", "http://fake-url/api/v2/dfiq/1")
+        self.assertIn("Unsupported method: TRACE", str(error.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
