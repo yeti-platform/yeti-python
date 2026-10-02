@@ -1,3 +1,5 @@
+import pathlib
+import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 from yeti.api import YetiApi
@@ -295,22 +297,27 @@ class TestYetiApi(unittest.TestCase):
             json={"count": 0},
         )
 
-    @patch("yeti.api.requests.Session.post")
-    def test_upload_dfiq_archive(self, mock_post):
+    # Mocks Session.send rather than Session.post, so that requests builds the
+    # request and rejects arguments it doesn't accept. The archive is a real
+    # file because requests may open files of its own, such as ~/.netrc.
+    @patch("yeti.api.requests.Session.send")
+    def test_upload_dfiq_archive(self, mock_send):
         mock_response = MagicMock()
         mock_response.content = b'{"uploaded": 1}'
-        mock_post.return_value = mock_response
+        mock_send.return_value = mock_response
 
-        with patch("builtins.open", unittest.mock.mock_open(read_data=b"data")):
-            result = self.api.upload_dfiq_archive("path/to/archive.zip")
-            self.assertEqual(result, {"uploaded": 1})
-        self.assertEqual(
-            mock_post.call_args[0][0], "http://fake-url/api/v2/dfiq/from_archive"
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            archive_path = pathlib.Path(tmp_dir) / "archive.zip"
+            archive_path.write_bytes(b"zip-archive-bytes")
+            result = self.api.upload_dfiq_archive(str(archive_path))
+        self.assertEqual(result, {"uploaded": 1})
+        request = mock_send.call_args[0][0]
+        self.assertEqual(request.url, "http://fake-url/api/v2/dfiq/from_archive")
         self.assertRegex(
-            mock_post.call_args[1]["headers"]["Content-Type"],
+            request.headers["Content-Type"],
             "multipart/form-data; boundary=[a-f0-9]{32}",
         )
+        self.assertIn(b"zip-archive-bytes", request.body)
 
     @patch("yeti.api.requests.Session.post")
     def test_add_observable(self, mock_post):

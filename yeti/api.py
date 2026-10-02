@@ -133,7 +133,7 @@ class YetiApi:
         if json_data:
             request_kwargs["json"] = json_data
         if body:
-            request_kwargs["body"] = body
+            request_kwargs["data"] = body
         if params:
             url = f"{url}?{urllib.parse.urlencode(params)}"
 

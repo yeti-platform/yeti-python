@@ -1,7 +1,10 @@
 import os
+import pathlib
+import tempfile
 import time
 import unittest
 import uuid
+import zipfile
 
 from yeti import errors
 from yeti.api import YetiApi
@@ -236,6 +239,30 @@ dfiq_version: 1.1.0
         patched["description"] = "patched as an object"
         patched = self.api.patch_dfiq(patched)
         self.assertEqual(patched["description"], "patched as an object")
+
+    def test_upload_dfiq_archive(self):
+        self.api.auth_api_key(os.getenv("YETI_API_KEY"))
+        scenario_uuid = str(uuid.uuid4())
+        scenario_yaml = f"""---
+name: testArchiveScenario
+type: scenario
+description: >
+  test
+id: S1991
+uuid: {scenario_uuid}
+dfiq_version: 1.1.0
+"""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            archive_path = pathlib.Path(tmp_dir) / "dfiq.zip"
+            # The server reads YAML files one directory deep in the archive.
+            with zipfile.ZipFile(archive_path, "w") as archive:
+                archive.writestr("scenarios/S1991.yaml", scenario_yaml)
+            result = self.api.upload_dfiq_archive(str(archive_path))
+
+        self.assertEqual(result, {"total_added": 1})
+        scenario = self.api.find_dfiq(name="testArchiveScenario", dfiq_type="scenario")
+        self.assertIsNotNone(scenario)
+        self.assertEqual(scenario["uuid"], scenario_uuid)
 
     def test_new_tag(self):
         self.api.auth_api_key(os.getenv("YETI_API_KEY"))
