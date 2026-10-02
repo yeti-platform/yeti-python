@@ -6,6 +6,20 @@ from yeti import errors
 import requests
 
 
+def _json_response(content: bytes) -> MagicMock:
+    response = MagicMock()
+    response.content = content
+    return response
+
+
+def _error_response(status_code: int) -> MagicMock:
+    error = requests.exceptions.HTTPError(f"{status_code} Client Error")
+    error.response = MagicMock(status_code=status_code, text="error_message")
+    response = MagicMock()
+    response.raise_for_status.side_effect = error
+    return response
+
+
 class TestYetiApi(unittest.TestCase):
     def setUp(self):
         self.api = YetiApi("http://fake-url")
@@ -22,6 +36,108 @@ class TestYetiApi(unittest.TestCase):
             "http://fake-url/api/v2/auth/api-token",
             headers={"x-yeti-apikey": "fake_apikey"},
         )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_auth_api_key_revoked(self, mock_post):
+        """A key revoked mid-session raises instead of retrying without end."""
+        mock_post.return_value = _json_response(b'{"access_token": "fake_token"}')
+        self.api.auth_api_key("fake_apikey")
+        mock_post.reset_mock()
+        mock_post.return_value = _error_response(401)
+
+        with self.assertRaises(errors.YetiAuthError):
+            self.api.search_indicators(name="test")
+        # The search, then one attempt to renew the session.
+        self.assertEqual(mock_post.call_count, 2)
+
+    @patch("yeti.api.requests.Session.post")
+    def test_auth_id_token(self, mock_post):
+        mock_post.return_value = _json_response(b'{"access_token": "fake_token"}')
+
+        self.api.auth_id_token(lambda: "fake_id_token")
+        self.assertEqual(self.api.client.headers["authorization"], "Bearer fake_token")
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/auth/oidc-callback-token",
+            json={"id_token": "fake_id_token"},
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_auth_google_access_token(self, mock_post):
+        mock_post.return_value = _json_response(b'{"access_token": "fake_token"}')
+
+        self.api.auth_google_access_token(lambda: "fake_google_token")
+        self.assertEqual(self.api.client.headers["authorization"], "Bearer fake_token")
+        mock_post.assert_called_with(
+            "http://fake-url/api/v2/auth/google-access-token",
+            json={"access_token": "fake_google_token"},
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_auth_google_access_token_refresh(self, mock_post):
+        """An expired session is renewed with a new token from the provider."""
+        google_tokens = iter(["google_token_1", "google_token_2"])
+        mock_post.side_effect = [
+            _json_response(b'{"access_token": "session_token_1"}'),
+            _error_response(401),
+            _json_response(b'{"access_token": "session_token_2"}'),
+            _json_response(b'{"indicators": [{"name": "test"}]}'),
+        ]
+
+        self.api.auth_google_access_token(lambda: next(google_tokens))
+        result = self.api.search_indicators(name="test")
+
+        self.assertEqual(result, [{"name": "test"}])
+        exchanges = [
+            call.kwargs["json"]
+            for call in mock_post.call_args_list
+            if call.args[0] == "http://fake-url/api/v2/auth/google-access-token"
+        ]
+        self.assertEqual(
+            exchanges,
+            [{"access_token": "google_token_1"}, {"access_token": "google_token_2"}],
+        )
+        self.assertEqual(
+            self.api.client.headers["authorization"], "Bearer session_token_2"
+        )
+
+    @patch("yeti.api.requests.Session.post")
+    def test_auth_google_access_token_rejected(self, mock_post):
+        mock_post.return_value = _error_response(401)
+        token_provider = MagicMock(return_value="fake_google_token")
+
+        with self.assertRaises(errors.YetiAuthError):
+            self.api.auth_google_access_token(token_provider)
+        token_provider.assert_called_once()
+        mock_post.assert_called_once()
+
+    @patch("yeti.api.requests.Session.post")
+    def test_auth_google_access_token_not_enabled(self, mock_post):
+        mock_post.return_value = _error_response(404)
+
+        with self.assertRaises(errors.YetiApiError) as raised:
+            self.api.auth_google_access_token(lambda: "fake_google_token")
+        self.assertEqual(raised.exception.status_code, 404)
+
+    def test_auth_token_methods_require_provider(self):
+        with self.assertRaises(ValueError):
+            self.api.auth_id_token()
+        with self.assertRaises(ValueError):
+            self.api.auth_google_access_token()
+
+    @patch("yeti.api.requests.Session.post")
+    def test_set_session_token_override(self, mock_post):
+        """Subclasses with their own transport receive the session token."""
+
+        class CustomTransportApi(YetiApi):
+            def _set_session_token(self, access_token):
+                self.session_token = access_token
+
+        api = CustomTransportApi("http://fake-url")
+        mock_post.return_value = _json_response(b'{"access_token": "fake_token"}')
+
+        api.auth_google_access_token(lambda: "fake_google_token")
+        self.assertEqual(api.session_token, "fake_token")
+        self.assertNotIn("authorization", api.client.headers)
 
     @patch("yeti.api.requests.Session.post")
     def test_search_indicators(self, mock_post):
