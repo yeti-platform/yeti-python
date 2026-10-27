@@ -4,7 +4,7 @@ import json
 import logging
 import urllib.parse
 import warnings
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 import requests
 import requests_toolbelt.multipart.encoder as encoder
@@ -20,6 +20,7 @@ TYPE_TO_ENDPOINT = {
 
 OIDC_CALLBACK_ENDPOINT = "/api/v2/auth/oidc-callback-token"
 API_TOKEN_ENDPOINT = "/api/v2/auth/api-token"
+GOOGLE_ACCESS_TOKEN_ENDPOINT = "/api/v2/auth/google-access-token"
 
 DFIQ_TYPE_DEPRECATION = (
     "dfiq_type is ignored: Yeti infers the DFIQ type from the payload. The "
@@ -63,6 +64,10 @@ SUPPORTED_IOC_TYPES = [
 YetiObject = dict[str, Any]
 YetiLinkObject = dict[str, Any]
 
+# Returns a credential to exchange for a Yeti session token. Auth methods call
+# it again for a fresh credential each time the session token expires.
+TokenProvider = Callable[[], str]
+
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -91,11 +96,17 @@ class YetiApi:
         self._url_root = url_root
 
         self._auth_function = ""
-        self._auth_function_map = {
+        # refresh_auth calls these without arguments, so each auth method must
+        # remember the credential it was given.
+        self._auth_function_map: dict[str, Callable[[], None]] = {
             "auth_api_key": self.auth_api_key,
+            "auth_id_token": self.auth_id_token,
+            "auth_google_access_token": self.auth_google_access_token,
         }
 
         self._apikey = None
+        self._id_token_provider: TokenProvider | None = None
+        self._google_access_token_provider: TokenProvider | None = None
 
     def do_request(
         self,
@@ -170,24 +181,101 @@ class YetiApi:
         if not self._apikey:
             raise ValueError("No API key provided.")
 
+        self._start_session(API_TOKEN_ENDPOINT, headers={"x-yeti-apikey": self._apikey})
+        self._auth_function = "auth_api_key"
+
+    def auth_id_token(self, token_provider: TokenProvider | None = None) -> None:
+        """Authenticates a session using an OpenID Connect ID token.
+
+        The server must use OIDC authentication. It verifies the token as a
+        Google ID token, checks that its audience is the server's OIDC client ID
+        or one of `auth.oidc_extra_client_audiences`, and maps its email address
+        to an existing, enabled user.
+
+        Args:
+            token_provider: Returns an ID token. Called again for a fresh token
+                each time the session token expires. Defaults to the provider
+                from the previous call.
+
+        Raises:
+            ValueError: If no provider was given in this or a previous call.
+            YetiAuthError: If the server rejects the token.
+        """
+        if token_provider is not None:
+            self._id_token_provider = token_provider
+        if self._id_token_provider is None:
+            raise ValueError("No ID token provider set.")
+
+        self._start_session(
+            OIDC_CALLBACK_ENDPOINT, json_data={"id_token": self._id_token_provider()}
+        )
+        self._auth_function = "auth_id_token"
+
+    def auth_google_access_token(
+        self, token_provider: TokenProvider | None = None
+    ) -> None:
+        """Authenticates a session using a Google OAuth access token.
+
+        This suits clients that can get Google access tokens without a browser,
+        but not ID tokens. The server must use OIDC authentication and set
+        `auth.google_access_token_client_ids`, or the endpoint answers 404. The
+        token must be issued to one of those OAuth clients, carry only identity
+        scopes (openid, email, profile), and belong to the verified email
+        address of an existing, enabled user.
+
+        Args:
+            token_provider: Returns a Google access token, for example by
+                refreshing google-auth credentials and returning their token.
+                Called again for a fresh token each time the session token
+                expires. Defaults to the provider from the previous call.
+
+        Raises:
+            ValueError: If no provider was given in this or a previous call.
+            YetiAuthError: If the server rejects the token.
+            YetiApiError: If the server doesn't offer the exchange (404), or
+                can't validate tokens at the moment (503).
+        """
+        if token_provider is not None:
+            self._google_access_token_provider = token_provider
+        if self._google_access_token_provider is None:
+            raise ValueError("No Google access token provider set.")
+
+        self._start_session(
+            GOOGLE_ACCESS_TOKEN_ENDPOINT,
+            json_data={"access_token": self._google_access_token_provider()},
+        )
+        self._auth_function = "auth_google_access_token"
+
+    def _start_session(
+        self,
+        endpoint: str,
+        json_data: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+    ) -> None:
+        """Exchanges a credential at an auth endpoint for a session token."""
+        # No retries: a 401 here means the credential was rejected, and a retry
+        # would call refresh_auth, which calls back into this method.
         response = self.do_request(
             "POST",
-            f"{self._url_root}{API_TOKEN_ENDPOINT}",
-            headers={"x-yeti-apikey": self._apikey},
+            f"{self._url_root}{endpoint}",
+            json_data=json_data,
+            headers=headers,
+            retries=0,
         )
-
         access_token = json.loads(response).get("access_token")
         if not access_token:
             raise RuntimeError(
                 f"Failed to find access token in the response: {response}"
             )
-        authd_session = requests.Session()
-        if self._tls_cert:
-            authd_session.verify = self._tls_cert  # type: ignore
-        authd_session.headers.update({"authorization": f"Bearer {access_token}"})
-        self.client = authd_session
+        self._set_session_token(access_token)
 
-        self._auth_function = "auth_api_key"
+    def _set_session_token(self, access_token: str) -> None:
+        """Sends a session token with subsequent requests.
+
+        Subclasses that send requests through another transport override this
+        to attach the token there.
+        """
+        self.client.headers["authorization"] = f"Bearer {access_token}"
 
     def refresh_auth(self):
         if self._auth_function:
